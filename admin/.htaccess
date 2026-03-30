@@ -1,0 +1,10 @@
+<IfModule mod_rewrite.c>
+RewriteEngine On
+
+# Ne pas toucher aux fichiers existants (CSS, images, etc.)
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+
+# Tout ce qui n'est pas un fichier physique passe par index.php du dossier admin
+RewriteRule ^(.*)$ index.php [QSA,L]
+</IfModule>
