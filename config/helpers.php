@@ -1,6 +1,72 @@
 <?php
 
 /**
+ * Retourne une chaîne relative "il y a X secondes/minutes/heures/jours..."
+ * basée sur le datetime de publication ($datetime est la valeur BDD, ex: "2026-04-28 12:00:00").
+ * Le calcul est fait par rapport à l'heure RÉELLE du serveur au moment de la requête.
+ */
+function timeAgo($datetime) {
+    $now  = new DateTime('now');
+    $pub  = new DateTime($datetime);
+    $diff = $now->diff($pub);
+
+    // Total en secondes pour une logique précise
+    $totalSeconds = (int)($now->getTimestamp() - $pub->getTimestamp());
+
+    if ($totalSeconds < 60) {
+        return "à l'instant";
+    } elseif ($totalSeconds < 3600) {
+        $m = (int)floor($totalSeconds / 60);
+        return "il y a " . $m . " " . ($m > 1 ? "minutes" : "minute");
+    } elseif ($totalSeconds < 86400) {
+        $h = (int)floor($totalSeconds / 3600);
+        return "il y a " . $h . " " . ($h > 1 ? "heures" : "heure");
+    } elseif ($totalSeconds < 604800) { // 7 jours
+        $d = (int)floor($totalSeconds / 86400);
+        return "il y a " . $d . " " . ($d > 1 ? "jours" : "jour");
+    } else {
+        // Plus d'une semaine → date complète lisible
+        return formatSmartDate($datetime, false);
+    }
+}
+
+/**
+ * Affiche la date de publication de façon intelligente :
+ * - Si l'article a moins de 24h : format relatif "il y a X min/h"
+ * - Sinon : date complète FR avec heure si $withTime = true
+ *
+ * @param string $datetime  Valeur DATETIME de la BDD
+ * @param bool   $withTime  Afficher l'heure en plus de la date (défaut : true)
+ */
+function formatSmartDate($datetime, $withTime = true) {
+    $months = [
+        'January' => 'janvier', 'February' => 'février', 'March' => 'mars',
+        'April' => 'avril', 'May' => 'mai', 'June' => 'juin',
+        'July' => 'juillet', 'August' => 'août', 'September' => 'septembre',
+        'October' => 'octobre', 'November' => 'novembre', 'December' => 'décembre'
+    ];
+
+    $ts  = strtotime($datetime);
+    $now = time();
+    $age = $now - $ts;
+
+    // Moins de 24h → relatif
+    if ($age < 86400) {
+        return timeAgo($datetime);
+    }
+
+    // Plus d'un jour → date FR
+    $formatted = date('d F Y', $ts);
+    foreach ($months as $en => $fr) {
+        $formatted = str_replace($en, $fr, $formatted);
+    }
+    if ($withTime) {
+        $formatted .= ' à ' . date('H:i', $ts);
+    }
+    return $formatted;
+}
+
+/**
  * Convertit un lien brut (Youtube, X/Twitter, LinkedIn) en code Intégrable (iframe/embed)
  * S'il s'agit déjà d'un iframe complet, il est retourné tel quel.
  */
@@ -74,40 +140,62 @@ function parseEmbedCode($code) {
             </div>';
 }
 
-// Fonction pour générer une URL chiffrée
-function getUrl($table, $id, $slug = null) {
-    global $router, $hashids;
-
-    // Chiffrer l'ID
-    $hash = $hashids->encode($id);
-    
-    // Si un slug est fourni, on s'assure qu'il est propre
-    if (!empty($slug)) {
-        $slug = generateSlug($slug); // utilise la fonction existante
-    } else {
-        $slug = $slug ?? '-'; // cas où il manque un slug
+/**
+ * Génère un NanoID sécurisé (alphanumérique, chiffres + lettres min/maj)
+ * Identique au standard NanoID (ex: V1StGq8YU5)
+ *
+ * @param int $length Longueur de l'ID (défaut 10)
+ */
+function generateNanoId($length = 10) {
+    $chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    $id = '';
+    for ($i = 0; $i < $length; $i++) {
+        $id .= $chars[random_int(0, strlen($chars) - 1)];
     }
-
-    // Retourner l'URL formatée à partir de la route nommée
-    // Modèle : /view/[table]/[hash]/[slug]
-    return SITE_URL . "/view/" . $table . "/" . $hash . "/" . $slug;
+    return $id;
 }
 
-// Fonction pour décoder une URL "chiffrée" (inverse de getUrl)
-// Utile si vous avez besoin de récupérer l'ID depuis une chaîne hash manuellement
-function decodeUrlHash($hash) {
+/**
+ * Génère l'URL publique d'un enregistrement.
+ *
+ * Nouveau système : utilise le nanoid stocké en BDD.
+ * Rétrocompatibilité : si le nanoid n'est pas fourni, on encode l'entier (legacy).
+ *
+ * Appel recommandé : getUrl('news', $news['id'], $news['slug'], $news['nanoid'])
+ * Appel court (legacy) : getUrl('news', $id, $slug)
+ *
+ * @param string      $table   'news' ou 'projects'
+ * @param int         $id      ID entier (pour les URLs admin et le fallback)
+ * @param string|null $slug    Slug de l'article
+ * @param string|null $nanoid  NanoID stocké en BDD (prioritaire)
+ */
+function getUrl($table, $id, $slug = null, $nanoid = null) {
     global $hashids;
-    $ids = $hashids->decode($hash);
-    return !empty($ids) ? $ids[0] : null;
+
+    // Utiliser le nanoid s'il est fourni (nouveau système)
+    if (!empty($nanoid)) {
+        $token = $nanoid;
+    } else {
+        // Fallback legacy : encode l'integer avec hashids
+        $token = $hashids->encode($id);
+    }
+
+    // Nettoyer le slug
+    if (!empty($slug)) {
+        $slug = generateSlug($slug);
+    } else {
+        $slug = '-';
+    }
+
+    return SITE_URL . "/view/" . $table . "/" . $token . "/" . $slug;
 }
 
 // Helper pour forcer la redirection si l'URL courante ne correspond pas au slug canonique
-// (Évite le duplicate content si l'utilisateur change manuellement l'URL)
-function forceCanonicalUrl($table, $id, $canonicalSlug) {
-    $currentUri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
-    $expectedUrl = getUrl($table, $id, $canonicalSlug);
+function forceCanonicalUrl($table, $id, $canonicalSlug, $nanoid = null) {
+    $currentUri  = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+    $expectedUrl = getUrl($table, $id, $canonicalSlug, $nanoid);
     $expectedUri = parse_url($expectedUrl, PHP_URL_PATH);
-    
+
     if ($currentUri !== $expectedUri) {
         header("HTTP/1.1 301 Moved Permanently");
         header("Location: " . $expectedUrl);
@@ -116,36 +204,22 @@ function forceCanonicalUrl($table, $id, $canonicalSlug) {
 }
 
 /**
- * Envoie un email via PHPMailer
+ * Envoie un email via la fonction native mail()
+ * Supprime les warnings si SMTP n'est pas configuré pour éviter de bloquer l'application
  */
-function sendMail($to, $subject, $body, $altBody = '') {
-    $mail = new PHPMailer\PHPMailer\PHPMailer(true);
+function sendMail($to, $subject, $body) {
+    $headers = "MIME-Version: 1.0" . "\r\n";
+    $headers .= "Content-type:text/html;charset=UTF-8" . "\r\n";
+    $headers .= 'From: ' . MAIL_FROM_NAME . ' <' . MAIL_FROM_EMAIL . '>' . "\r\n";
 
     try {
-        // Paramètres du serveur
-        $mail->isSMTP();
-        $mail->CharSet    = 'UTF-8';
-        $mail->Host       = MAIL_HOST;
-        $mail->SMTPAuth   = MAIL_AUTH;
-        $mail->Username   = MAIL_USER;
-        $mail->Password   = MAIL_PASS;
-        $mail->SMTPSecure = MAIL_ENCRYPTION === 'tls' ? PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS : PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_SMTPS;
-        $mail->Port       = MAIL_PORT;
-
-        // Destinataires
-        $mail->setFrom(MAIL_FROM_EMAIL, MAIL_FROM_NAME);
-        $mail->addAddress($to);
-
-        // Contenu
-        $mail->isHTML(true);
-        $mail->Subject = $subject;
-        $mail->Body    = $body;
-        $mail->AltBody = $altBody ?: strip_tags($body);
-
-        $mail->send();
-        return true;
+        // Le @ supprime l'erreur si le serveur SMTP local n'est pas configuré (ex: XAMPP par défaut)
+        return @mail($to, $subject, $body, $headers);
     } catch (Exception $e) {
-        error_log("Erreur d'envoi d'email : " . $mail->ErrorInfo);
+        error_log("Erreur d'envoi d'email : " . $e->getMessage());
+        return false;
+    } catch (Error $e) {
+        error_log("Erreur système d'envoi d'email : " . $e->getMessage());
         return false;
     }
 }
@@ -189,4 +263,31 @@ function getReadingTime($content) {
 
     // Retourne au moins 1 minute
     return (int)($minutes > 0 ? $minutes : 1);
+}
+
+/**
+ * Envoie une notification Push aux abonnés PWA
+ * Nécessite l'installation de 'minishlink/web-push' pour fonctionner réellement.
+ */
+function sendPushNotification($title, $body, $url = '/') {
+    try {
+        $pdo = getDBConnection();
+        $stmt = $pdo->query("SELECT * FROM push_subscriptions");
+        $subscriptions = $stmt->fetchAll();
+
+        if (empty($subscriptions)) return true;
+
+        // Note: L'envoi réel nécessite une clé VAPID et la librairie web-push.
+        // Voici la structure logique :
+        /*
+        foreach ($subscriptions as $sub) {
+            // Envoyer via WebPush
+        }
+        */
+        
+        return true;
+    } catch (Exception $e) {
+        error_log("Erreur Push : " . $e->getMessage());
+        return false;
+    }
 }

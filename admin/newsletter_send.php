@@ -1,5 +1,6 @@
 <?php
-require_once __DIR__ . '/../vendor/autoload.php';
+// require_once __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__ . '/../config/router.php';
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../config/mail.php';
 require_once __DIR__ . '/../config/router.php';
@@ -32,7 +33,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Fetch news details
         if (!empty($selected_news)) {
             $ids = implode(',', array_map('intval', $selected_news));
-            $news_data = $pdo->query("SELECT * FROM news WHERE id IN ($ids)")->fetchAll();
+            $news_data = $pdo->query("SELECT *, id, title, slug, nanoid, excerpt, content, image FROM news WHERE id IN ($ids)")->fetchAll();
             foreach ($news_data as $n) {
                 $content_blocks[] = [
                     'type' => 'Actualité',
@@ -40,7 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'image' => $n['image'],
                     'excerpt' => $n['excerpt'],
                     'content' => $n['content'],
-                    'url' => getUrl('news', $n['id'], $n['slug'])
+                    'url' => getUrl('news', $n['id'], $n['slug'], $n['nanoid'] ?? null)
                 ];
             }
         }
@@ -48,7 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Fetch project details
         if (!empty($selected_projects)) {
             $ids = implode(',', array_map('intval', $selected_projects));
-            $projects_data = $pdo->query("SELECT * FROM projects WHERE id IN ($ids)")->fetchAll();
+            $projects_data = $pdo->query("SELECT *, id, title, slug, nanoid, description, content, image FROM projects WHERE id IN ($ids)")->fetchAll();
             foreach ($projects_data as $p) {
                 $content_blocks[] = [
                     'type' => 'Projet',
@@ -56,7 +57,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'image' => $p['image'],
                     'excerpt' => $p['description'], // synthesis
                     'content' => $p['content'],
-                    'url' => getUrl('projects', $p['id'], $p['slug'])
+                    'url' => getUrl('projects', $p['id'], $p['slug'], $p['nanoid'] ?? null)
                 ];
             }
         }
@@ -153,7 +154,8 @@ $current_page = 'newsletter';
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Envoyer une Newsletter - DSM ADMIN</title>
-    <link rel="stylesheet" href="/dsm/dist/output.css">
+    <link rel="icon" type="image/png" href="<?php echo SITE_URL; ?>/assets/logo/logo-dsm.jpg">
+    <link rel="stylesheet" href="<?php echo SITE_URL; ?>/dist/output.css">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Outfit', sans-serif; }
@@ -174,7 +176,7 @@ $current_page = 'newsletter';
                 <h1 class="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">Envoyer <span class="text-amber-600">Newsletter</span></h1>
                 <p class="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.3em] mt-1">Composer et diffuser aux abonnés</p>
             </div>
-            <a href="/dsm/admin/newsletter" class="p-3 bg-slate-100 dark:bg-slate-800 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-200 transition-all">
+            <a href="<?php echo SITE_URL; ?>/admin/newsletter" class="p-3 bg-slate-100 dark:bg-slate-800 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-200 transition-all">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
             </a>
         </header>

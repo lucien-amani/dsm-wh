@@ -3,13 +3,17 @@
 -- https://www.phpmyadmin.net/
 --
 -- Hôte : 127.0.0.1
--- Généré le : mer. 11 mars 2026 à 23:50
+-- Généré le : mar. 28 avr. 2026 à 15:41
 -- Version du serveur : 10.4.32-MariaDB
 -- Version de PHP : 8.2.12
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
 SET time_zone = "+00:00";
+
+-- -- Création de la base de données
+-- CREATE DATABASE IF NOT EXISTS `dsm_website` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
+-- USE `dsm_website`;
 
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
@@ -40,25 +44,27 @@ CREATE TABLE `admin_logs` (
 --
 
 INSERT INTO `admin_logs` (`id`, `user_id`, `action`, `ip_address`, `created_at`) VALUES
-(1, 2, 'deconnexion', '::1', '2026-03-05 07:39:46'),
-(2, 3, 'connexion', '::1', '2026-03-05 07:40:02'),
-(3, 3, 'deconnexion', '::1', '2026-03-05 07:40:09'),
-(4, 2, 'connexion', '::1', '2026-03-05 07:40:22'),
-(5, 3, 'connexion', '41.243.3.158', '2026-03-05 07:58:22'),
-(6, 3, 'connexion', '2605:59c0:9c9:1508:887:62c4:7edd:939a', '2026-03-05 10:58:25'),
-(7, 2, 'connexion', '::1', '2026-03-07 08:05:44'),
-(8, 2, 'suppression article : Actualité X (Twitter) du 02/', '::1', '2026-03-07 08:06:35'),
-(9, 2, 'suppression article : Actualité de la Dynamique Sa', '::1', '2026-03-07 08:06:40'),
-(10, 2, 'suppression article : Lorem10', '::1', '2026-03-07 08:06:46'),
-(11, 2, 'suppression article : Actualité Média du 24/02/202', '::1', '2026-03-07 08:06:50'),
-(12, 2, 'suppression article : Test sur X', '::1', '2026-03-07 08:06:56'),
-(13, 2, 'suppression article : Actualité Média du 24/02/202', '::1', '2026-03-07 08:07:02'),
-(14, 2, 'suppression article : Élu en 2023 : Un engagement ', '::1', '2026-03-07 08:07:08'),
-(15, 2, 'suppression article : Expertise en Énergies Renouv', '::1', '2026-03-07 08:07:13'),
-(16, 2, 'suppression article : Actions Humanitaires : Au Se', '::1', '2026-03-07 08:07:17'),
-(17, 2, 'suppression projet : Centrale Hydroélectrique de L', '::1', '2026-03-07 08:07:42'),
-(18, 2, 'suppression projet : Forages d\'Eau Potable au Sud-', '::1', '2026-03-07 08:07:47'),
-(19, 2, 'suppression projet : Installation Solaire pour Éco', '::1', '2026-03-07 08:07:52');
+(20, 2, 'connexion', '::1', '2026-04-28 09:40:52'),
+(21, 2, 'création article : Le derniere volontés de Mozart', '::1', '2026-04-28 09:58:13'),
+(22, 2, 'connexion', '::1', '2026-04-28 10:16:15'),
+(23, 2, 'modification article : Inauguration du nouveau cen', '::1', '2026-04-28 10:19:37'),
+(24, 2, 'création projet : hjkhhhhhhhhhhhhhhhhh', '::1', '2026-04-28 10:30:27'),
+(25, 2, 'connexion', '::1', '2026-04-28 10:42:37'),
+(26, 2, 'modification article : Inauguration du nouveau cen', '::1', '2026-04-28 10:43:44'),
+(27, 2, 'création projet : NJHNJKR', '::1', '2026-04-28 10:48:47'),
+(28, 2, 'connexion', '::1', '2026-04-28 11:21:10'),
+(29, 2, 'désactivation éditeur : Promesse BIBENTYO', '::1', '2026-04-28 11:32:59'),
+(30, 2, 'activation éditeur : Promesse BIBENTYO', '::1', '2026-04-28 11:33:04'),
+(31, 2, 'création éditeur : BUKAMU', '::1', '2026-04-28 11:42:03'),
+(32, 2, 'deconnexion', '::1', '2026-04-28 11:43:57'),
+(33, 2, 'connexion', '::1', '2026-04-28 11:44:19'),
+(34, 2, 'modification éditeur : BUKAMU', '::1', '2026-04-28 11:44:59'),
+(35, 2, 'deconnexion', '::1', '2026-04-28 11:45:11'),
+(36, 4, 'connexion', '::1', '2026-04-28 11:45:25'),
+(37, 4, 'deconnexion', '::1', '2026-04-28 11:57:28'),
+(38, 4, 'connexion', '::1', '2026-04-28 11:57:40'),
+(39, 4, 'deconnexion', '::1', '2026-04-28 12:02:15'),
+(40, 2, 'connexion', '::1', '2026-04-28 12:02:29');
 
 -- --------------------------------------------------------
 
@@ -75,6 +81,14 @@ CREATE TABLE `comments` (
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `likes` int(11) DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Déchargement des données de la table `comments`
+--
+
+INSERT INTO `comments` (`id`, `news_id`, `user_name`, `content`, `status`, `created_at`, `likes`) VALUES
+(13, 14, 'Lucien', 'Longue vie à la france afrique', 'approved', '2026-04-28 10:15:31', 1),
+(14, 14, 'chikc', 'jjjjjjjjjjjjjjjjjjjjjjjj fjkkkkkkkkkkkkkk fjf', 'rejected', '2026-04-28 10:20:37', 0);
 
 -- --------------------------------------------------------
 
@@ -112,6 +126,13 @@ CREATE TABLE `log_exports` (
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+--
+-- Déchargement des données de la table `log_exports`
+--
+
+INSERT INTO `log_exports` (`id`, `filename`, `created_at`) VALUES
+(1, 'logs_export_2026_04_28_11_50_40.json', '2026-04-28 09:50:40');
+
 -- --------------------------------------------------------
 
 --
@@ -120,6 +141,7 @@ CREATE TABLE `log_exports` (
 
 CREATE TABLE `news` (
   `id` int(11) NOT NULL,
+  `nanoid` varchar(12) DEFAULT NULL,
   `author_id` int(11) DEFAULT NULL,
   `title` varchar(255) NOT NULL,
   `slug` varchar(255) NOT NULL,
@@ -135,6 +157,18 @@ CREATE TABLE `news` (
   `published` tinyint(1) DEFAULT 1,
   `likes` int(11) DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Déchargement des données de la table `news`
+--
+
+INSERT INTO `news` (`id`, `nanoid`, `author_id`, `title`, `slug`, `excerpt`, `content`, `embed_code`, `image`, `category`, `author`, `views`, `created_at`, `updated_at`, `published`, `likes`) VALUES
+(13, 'EORIGtnQV4', 2, 'Le derniere volontés de Mozart', 'le-derniere-volont-es-de-mozart', 'HOLA', '<h1 class=\"fig-headline fig-pagination__hidden\">Guerre en Ukraine : un nouveau mus&eacute;e &agrave; Pyongyang expose des chars et des blind&eacute;s am&eacute;ricains, allemands et fran&ccedil;ais</h1>\r\n<p>Il est loin le temps o&ugrave; la Russie gardait le silence autour de la pr&eacute;sence de soldats nord-cor&eacute;ens engag&eacute;s dans la&nbsp;<a href=\"http://www.lefigaro.fr/international/dans-la-region-de-koursk-le-front-ukrainien-s-effondre-sous-les-assauts-russes-20250310\" target=\"_blank\" rel=\"noopener\" data-fig-type=\"NewsFlash\" data-gtm-custom-categorie=\"navigation\" data-gtm-custom-action=\"crossclick\" data-gtm-custom-label=\"Contextuel\" data-gtm-event=\"customEventSPE\" data-fig-domain=\"LEFIGARO\" data-mrf-link=\"http://www.lefigaro.fr/international/dans-la-region-de-koursk-le-front-ukrainien-s-effondre-sous-les-assauts-russes-20250310\">bataille de Koursk</a>. &Agrave; l&rsquo;&eacute;t&eacute; 2024, les Ukrainiens avaient r&eacute;ussi une perc&eacute;e spectaculaire dans cet oblast russe frontalier de l&rsquo;Ukraine. &Agrave; l&rsquo;automne, les Russes contre-attaquaient, avec l&rsquo;appui de&nbsp;<a href=\"http://www.lefigaro.fr/international/pourquoi-des-milliers-de-soldats-nord-coreens-ne-changeraient-pas-le-cours-de-la-guerre-en-ukraine-20241025\" target=\"_blank\" rel=\"noopener\" data-fig-type=\"Article\" data-gtm-custom-categorie=\"navigation\" data-gtm-custom-action=\"crossclick\" data-gtm-custom-label=\"Contextuel\" data-gtm-event=\"customEventSPE\" data-fig-domain=\"LEFIGARO\" data-mrf-link=\"http://www.lefigaro.fr/international/pourquoi-des-milliers-de-soldats-nord-coreens-ne-changeraient-pas-le-cours-de-la-guerre-en-ukraine-20241025\">quatre brigades nord-cor&eacute;ennes</a>, ce qui sera officialis&eacute; d&eacute;but 2025 par Pyongyang et Moscou, la bataille de Koursk s&rsquo;achevant en avril. Depuis, le r&eacute;gime ermite vante les hauts faits de ses soldats, passant sous silence les pertes &eacute;lev&eacute;es rapport&eacute;es par les services de renseignement occidentaux - 2000 morts sur 12.000, selon S&eacute;oul. Qu&rsquo;importe, pour Pyongyang, le symbole est ailleurs : pour la premi&egrave;re fois de son histoire, la R&eacute;publique de Cor&eacute;e a men&eacute; une op&eacute;ration militaire ext&eacute;rieure &agrave; l&rsquo;&eacute;tranger, qui plus est en Europe, &agrave; pr&egrave;s de 7000 km de ses fronti&egrave;res.</p>', '', NULL, 'Economie', 'Ir. Samy Magadju', 0, '2026-04-28 09:58:13', '2026-04-28 11:17:53', 1, 0),
+(14, 'k9IdiR3xjq', 2, 'Inauguration du nouveau centre communautaire à Bagira', 'inauguration-du-nouveau-centre-communautaire-a-bagira', 'Un nouveau centre polyvalent a été inauguré ce matin à Bagira, offrant des services essentiels à la population locale.', '<p>Le projet, soutenu par la Dynamique Samy Magadju, vise &agrave; renforcer les capacit&eacute;s locales et &agrave; offrir un espace de rencontre et de formation pour les jeunes du quartier.</p>', '', '69f08f60b407a.jpg', 'Social', 'Ir. Samy Magadju', 18, '2026-04-28 10:08:11', '2026-04-28 13:19:11', 1, 4),
+(15, 'A1tbqgc1n3', 2, 'Lutte contre l\'érosion : lancement des travaux de drainage', 'lutte-contre-erosion-lancement-travaux-drainage', 'Face aux récentes inondations, des travaux d\'urgence ont débuté pour sécuriser les zones à risque dans la commune de Bukavu.', 'Ces travaux de drainage sont essentiels pour prévenir les glissements de terrain et protéger les habitations des citoyens pendant la saison des pluies.', NULL, NULL, 'Environnement', 'Ir. Samy Magadju', 7, '2026-04-28 10:08:11', '2026-04-28 13:24:39', 1, 1),
+(16, 'gu2xEaNiAi', 2, 'Formation sur les énergies renouvelables pour les ingénieurs locaux', 'formation-energies-renouvelables-ingenieurs-locaux', 'Une série d\'ateliers a débuté pour former les techniciens du Sud-Kivu aux nouvelles technologies solaires et hydroélectriques.', 'L\'objectif est de créer une main-d\'œuvre qualifiée capable de maintenir et de développer les infrastructures énergétiques de la région.', NULL, NULL, 'Énergie', 'Ir. Samy Magadju', 1, '2026-04-28 10:08:11', '2026-04-28 13:24:31', 1, 0),
+(17, 'drsxQFgECq', 2, 'Plaidoyer pour une meilleure gestion de l\'eau potable', 'plaidoyer-meilleure-gestion-eau-potable', 'L\'Honorable Samy Magadju a porté la voix des sinistrés auprès des autorités compétentes pour résoudre la crise de l\'eau.', 'Il est impératif que chaque foyer ait accès à une eau propre et abordable. La Dynamique continue de surveiller de près l\'avancement des promesses gouvernementales.', NULL, NULL, 'Politique', 'Ir. Samy Magadju', 2, '2026-04-28 10:08:11', '2026-04-28 13:24:23', 1, 1),
+(18, 'ZeTnUjYLcW', 2, 'Soutien aux micro-entrepreneurs du Sud-Kivu', 'soutien-micro-entrepreneurs-sud-kivu', 'Un nouveau programme de micro-crédit a été lancé pour aider les petits commerçants à relancer leurs activités.', 'Ce programme met l\'accent sur l\'autonomisation des femmes et des jeunes entrepreneurs, moteurs essentiels de l\'économie locale.', NULL, NULL, 'Economie', 'Ir. Samy Magadju', 2, '2026-04-28 10:08:11', '2026-04-28 11:17:54', 1, 0);
 
 -- --------------------------------------------------------
 
@@ -198,6 +232,7 @@ INSERT INTO `news_categories` (`id`, `name`) VALUES
 
 CREATE TABLE `projects` (
   `id` int(11) NOT NULL,
+  `nanoid` varchar(12) DEFAULT NULL,
   `author_id` int(11) DEFAULT NULL,
   `title` varchar(255) NOT NULL,
   `slug` varchar(255) NOT NULL,
@@ -216,6 +251,15 @@ CREATE TABLE `projects` (
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   `published` tinyint(1) DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Déchargement des données de la table `projects`
+--
+
+INSERT INTO `projects` (`id`, `nanoid`, `author_id`, `title`, `slug`, `description`, `content`, `embed_code`, `image`, `location`, `category`, `status`, `start_date`, `end_date`, `budget`, `beneficiaries`, `created_at`, `updated_at`, `published`) VALUES
+(5, 'a8RVSQBs2U', 2, 'hjkhhhhhhhhhhhhhhhhh', 'hjkhhhhhhhhhhhhhhhhh', 'KDYYR ', '<p>jjirufioion ed</p>', '', '69f08c43185f8.png', 'Bukavu', 'Développement Local', 'En cours', NULL, NULL, NULL, '7090', '2026-04-28 10:30:27', '2026-04-28 11:17:55', 1),
+(6, 'NFy4twVncP', 2, 'NJHNJKR', 'brouillon-auto-28-04-2026-12-48-26', '', '<p>GHVNHH&nbsp; DJDIL D</p>', NULL, NULL, '', NULL, 'Terminé', NULL, NULL, NULL, '', '2026-04-28 10:48:26', '2026-04-28 11:17:55', 0),
+(7, 'zKkmmePz4a', 2, 'NJHNJKR', 'njhnjkr', 'HGUYDD', '<p>GHVNHH&nbsp; DJDIL D</p>', '', '69f0908f2eee3.png', 'KASHA', '', 'Terminé', NULL, NULL, NULL, '1002', '2026-04-28 10:48:47', '2026-04-28 11:17:55', 1);
 
 -- --------------------------------------------------------
 
@@ -241,6 +285,20 @@ INSERT INTO `project_categories` (`id`, `name`) VALUES
 (8, 'Énergie & Éducation'),
 (1, 'Énergie Renouvelable'),
 (3, 'Environnement');
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `push_subscriptions`
+--
+
+CREATE TABLE `push_subscriptions` (
+  `id` int(11) NOT NULL,
+  `endpoint` text NOT NULL,
+  `p256dh` varchar(255) NOT NULL,
+  `auth` varchar(255) NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -277,6 +335,7 @@ CREATE TABLE `users` (
   `phone` varchar(20) DEFAULT NULL,
   `avatar` varchar(255) DEFAULT NULL,
   `role` enum('Admin','Superadmin','Editor') DEFAULT 'Editor',
+  `status` tinyint(1) DEFAULT 1,
   `last_login` datetime DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -285,9 +344,10 @@ CREATE TABLE `users` (
 -- Déchargement des données de la table `users`
 --
 
-INSERT INTO `users` (`id`, `username`, `password`, `full_name`, `email`, `phone`, `avatar`, `role`, `last_login`, `created_at`) VALUES
-(2, 'lucienamani', '$2y$10$nnxP5jQydciqOVszltWHSeU/VO0DTRQu//XfMEUxZXtcawXjWB10i', 'Lucien Amani', 'luciusamani@gmail.com', '0848382440', 'avatar_2_1772696809.png', 'Superadmin', '2026-03-07 10:05:43', '2026-03-03 00:36:49'),
-(3, 'promesse', '$2y$10$7e5MHjewmU0BRdlZISHKeemtXvX1CMtWF9oLZEjH9VGlLBX6LTdZa', 'Promesse BIBENTYO', 'promessebibentyo80@gmail.com', '+243971426799', NULL, 'Editor', '2026-03-05 12:58:24', '2026-03-04 21:45:14');
+INSERT INTO `users` (`id`, `username`, `password`, `full_name`, `email`, `phone`, `avatar`, `role`, `status`, `last_login`, `created_at`) VALUES
+(2, 'lucienamani', '$2y$10$nnxP5jQydciqOVszltWHSeU/VO0DTRQu//XfMEUxZXtcawXjWB10i', 'Lucien Amani', 'luciusamani@gmail.com', '0848382440', 'avatar_2_1772696809.png', 'Superadmin', 1, '2026-04-28 14:02:29', '2026-03-03 00:36:49'),
+(3, 'promesse', '$2y$10$7e5MHjewmU0BRdlZISHKeemtXvX1CMtWF9oLZEjH9VGlLBX6LTdZa', 'Promesse BIBENTYO', 'promessebibentyo80@gmail.com', '+243971426799', NULL, 'Editor', 1, '2026-03-05 12:58:24', '2026-03-04 21:45:14'),
+(4, 'bukamu', '$2y$10$zShm41uBfrb1jSd0i8rT1OZxnBnOTsK3u5JdkWxJJIOue7tmHOA2m', 'BUKAMU', 'teacher@gmail.com', '+243971426798', NULL, 'Editor', 1, '2026-04-28 13:57:39', '2026-04-28 11:42:03');
 
 --
 -- Index pour les tables déchargées
@@ -324,6 +384,7 @@ ALTER TABLE `log_exports`
 ALTER TABLE `news`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `slug` (`slug`),
+  ADD UNIQUE KEY `idx_news_nanoid` (`nanoid`),
   ADD KEY `fk_news_author` (`author_id`);
 
 --
@@ -345,7 +406,8 @@ ALTER TABLE `news_categories`
 --
 ALTER TABLE `projects`
   ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `slug` (`slug`);
+  ADD UNIQUE KEY `slug` (`slug`),
+  ADD UNIQUE KEY `idx_projects_nanoid` (`nanoid`);
 
 --
 -- Index pour la table `project_categories`
@@ -353,6 +415,12 @@ ALTER TABLE `projects`
 ALTER TABLE `project_categories`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `name` (`name`);
+
+--
+-- Index pour la table `push_subscriptions`
+--
+ALTER TABLE `push_subscriptions`
+  ADD PRIMARY KEY (`id`);
 
 --
 -- Index pour la table `settings`
@@ -376,13 +444,13 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT pour la table `admin_logs`
 --
 ALTER TABLE `admin_logs`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=41;
 
 --
 -- AUTO_INCREMENT pour la table `comments`
 --
 ALTER TABLE `comments`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
 
 --
 -- AUTO_INCREMENT pour la table `contact_messages`
@@ -394,13 +462,13 @@ ALTER TABLE `contact_messages`
 -- AUTO_INCREMENT pour la table `log_exports`
 --
 ALTER TABLE `log_exports`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT pour la table `news`
 --
 ALTER TABLE `news`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
 
 --
 -- AUTO_INCREMENT pour la table `newsletter_subscribers`
@@ -418,13 +486,19 @@ ALTER TABLE `news_categories`
 -- AUTO_INCREMENT pour la table `projects`
 --
 ALTER TABLE `projects`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT pour la table `project_categories`
 --
 ALTER TABLE `project_categories`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+
+--
+-- AUTO_INCREMENT pour la table `push_subscriptions`
+--
+ALTER TABLE `push_subscriptions`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT pour la table `settings`
@@ -436,7 +510,7 @@ ALTER TABLE `settings`
 -- AUTO_INCREMENT pour la table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- Contraintes pour les tables déchargées

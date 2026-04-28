@@ -1,0 +1,21 @@
+# Environnement
+.env
+temp_db_setup.php
+
+# Dépendances
+vendor/
+node_modules/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Uploads (Optionnel: décommentez si vous ne voulez pas envoyer les images uploadées)
+# uploads/
+
+# Logs
+*.log

@@ -56,7 +56,19 @@ $featured_news = $stmt->fetch();
 include 'includes/header.php';
 ?>
 
-<!-- Page Header Figaro Style -->
+<!-- Filtres : Version Mobile (Tout en haut, remplace le header) -->
+<section id="news-filter-bar-mobile" class="lg:hidden bg-white dark:bg-slate-900 border-b border-gray-300 dark:border-gray-800 py-3 sticky top-0 z-[60] shadow-sm">
+    <div class="max-w-7xl mx-auto px-4">
+        <div class="flex overflow-x-auto no-scrollbar whitespace-nowrap items-center gap-6 py-1">
+            <a href="<?php echo $router->generate('news_list'); ?>" class="text-sm font-bold uppercase tracking-widest flex-shrink-0 <?php echo !$category ? 'text-red-700 dark:text-red-500 border-b-2 border-red-700 dark:border-red-500' : 'text-gray-600 dark:text-gray-400'; ?>">La Une</a>
+            <?php foreach ($categories as $cat): ?>
+                <a href="<?php echo $router->generate('news_list'); ?>?category=<?php echo urlencode($cat); ?>" class="text-sm font-bold uppercase tracking-widest flex-shrink-0 <?php echo $category === $cat ? 'text-red-700 dark:text-red-500 border-b-2 border-red-700 dark:border-red-500' : 'text-gray-600 dark:text-gray-400'; ?>"><?php echo htmlspecialchars($cat); ?></a>
+            <?php endforeach; ?>
+        </div>
+    </div>
+</section>
+
+<!-- Page Header Figaro Style (Bureau & Mobile) -->
 <section class="bg-white dark:bg-slate-900 border-b-[3px] border-black dark:border-white py-12 transition-colors">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center">
@@ -66,23 +78,46 @@ include 'includes/header.php';
     </div>
 </section>
 
-<!-- Filtres Sticky Figaro Style -->
-<section class="bg-white dark:bg-slate-900 border-b border-gray-300 dark:border-gray-800 py-4 sticky top-0 z-40 transition-colors">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        <div class="inline-flex flex-wrap justify-center gap-6">
-            <a href="<?php echo $router->generate('news_list'); ?>"
-                class="text-sm font-bold uppercase tracking-widest transition-colors <?php echo !$category ? 'text-red-700 dark:text-red-500 border-b-2 border-red-700 dark:border-red-500' : 'text-gray-600 dark:text-gray-400 hover:text-red-700 dark:hover:text-red-500'; ?>">
-                La Une
-            </a>
-            <?php foreach ($categories as $cat): ?>
-                <a href="<?php echo $router->generate('news_list'); ?>?category=<?php echo urlencode($cat); ?>"
-                    class="text-sm font-bold uppercase tracking-widest transition-colors <?php echo $category === $cat ? 'text-red-700 dark:text-red-500 border-b-2 border-red-700 dark:border-red-500' : 'text-gray-600 dark:text-gray-400 hover:text-red-700 dark:hover:text-red-500'; ?>">
-                    <?php echo htmlspecialchars($cat); ?>
-                </a>
-            <?php endforeach; ?>
+<!-- Filtres : Version Bureau (Position classique sous le titre) -->
+<section class="hidden lg:block bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-gray-800 py-6 sticky top-[80px] z-40 shadow-sm">
+    <div class="max-w-7xl mx-auto px-8">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center gap-6">
+                <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">Parcourir :</span>
+                <div class="flex flex-wrap gap-3">
+                    <a href="<?php echo $router->generate('news_list'); ?>" 
+                       class="px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-widest transition-all <?php echo !$category ? 'bg-red-700 text-white shadow-lg shadow-red-700/20' : 'bg-slate-50 text-slate-500 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-750'; ?>">
+                        La Une
+                    </a>
+                    <?php foreach ($categories as $cat): ?>
+                        <a href="<?php echo $router->generate('news_list'); ?>?category=<?php echo urlencode($cat); ?>" 
+                           class="px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-widest transition-all <?php echo $category === $cat ? 'bg-red-700 text-white shadow-lg shadow-red-700/20' : 'bg-slate-50 text-slate-500 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-750'; ?>">
+                            <?php echo htmlspecialchars($cat); ?>
+                        </a>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+            <div class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">
+                <?php echo $total_news; ?> Article(s)
+            </div>
         </div>
     </div>
 </section>
+
+<style>
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+    @media (max-width: 1023px) {
+        nav.sticky { display: none !important; }
+        body { padding-top: 0 !important; }
+    }
+</style>
+
+<script>
+// Le script de scroll n'est plus nécessaire si on le masque par défaut via CSS, 
+// mais on peut le garder pour gérer le comportement desktop si besoin.
+</script>
 
 <!-- Actualité à la Une -->
 <?php if ($featured_news && !$category && $page_num === 1): ?>
@@ -95,7 +130,7 @@ include 'includes/header.php';
                             <?php echo parseEmbedCode($featured_news['embed_code']); ?>
                         </div>
                     <?php else: ?>
-                        <a href="<?php echo getUrl('news', $featured_news['id'], $featured_news['slug']); ?>" class="block">
+                        <a href="<?php echo getUrl('news', $featured_news['id'], $featured_news['slug'], $featured_news['nanoid'] ?? null); ?>" class="block">
                             <?php
                             $featured_image = $featured_news['image'] ? SITE_URL . '/uploads/' . $featured_news['image'] : SITE_URL . '/uploads/profil.jpg';
                             ?>
@@ -110,7 +145,7 @@ include 'includes/header.php';
                     <div class="mb-4">
                         <span class="text-sm font-bold text-red-700 dark:text-red-500 uppercase tracking-widest">À LA UNE</span>
                         <span class="text-gray-300 dark:text-gray-700 mx-2">|</span>
-                        <span class="text-sm text-gray-400 font-serif"><?php echo formatDateFR($featured_news['created_at']); ?></span>
+                        <span class="text-sm text-gray-400 font-serif" title="<?php echo date('d/m/Y à H:i', strtotime($featured_news['created_at'])); ?>"><?php echo formatSmartDate($featured_news['created_at']); ?></span>
                         <span class="text-gray-300 dark:text-gray-700 mx-2">•</span>
                         <span class="text-sm text-gray-600 dark:text-gray-400 font-bold uppercase tracking-widest"><?php echo htmlspecialchars($featured_news['author_name'] ?: 'La Rédaction'); ?></span>
                         <span class="text-gray-300 dark:text-gray-700 mx-2">•</span>
@@ -118,7 +153,7 @@ include 'includes/header.php';
                     </div>
 
                     <h2 class="text-4xl md:text-5xl font-bold font-serif leading-tight text-black dark:text-white mb-6 group-hover:text-red-700 dark:group-hover:text-red-500 transition-colors">
-                        <a href="<?php echo getUrl('news', $featured_news['id'], $featured_news['slug']); ?>">
+                        <a href="<?php echo getUrl('news', $featured_news['id'], $featured_news['slug'], $featured_news['nanoid'] ?? null); ?>">
                             <?php echo htmlspecialchars($featured_news['title']); ?>
                         </a>
                     </h2>
@@ -151,7 +186,7 @@ include 'includes/header.php';
                                 </div>
                             </div>
                         <?php else: ?>
-                            <a href="<?php echo getUrl('news', $news['id'], $news['slug']); ?>"
+                            <a href="<?php echo getUrl('news', $news['id'], $news['slug'], $news['nanoid'] ?? null); ?>"
                                 class="block w-full mb-4 overflow-hidden border border-gray-200 dark:border-gray-800">
                                 <?php
                                 $news_image = $news['image'] ? SITE_URL . '/uploads/' . $news['image'] : SITE_URL . '/uploads/profil.jpg';
@@ -168,7 +203,7 @@ include 'includes/header.php';
                                     <?php echo htmlspecialchars($news['category'] ?: 'INFO'); ?>
                                 </span>
                                 <span class="text-[10px] text-gray-500 font-serif">
-                                    <?php echo formatDateFR($news['created_at']); ?>
+                                    <span title="<?php echo date('d/m/Y à H:i', strtotime($news['created_at'])); ?>"><?php echo formatSmartDate($news['created_at']); ?></span>
                                 </span>
                                 <span class="text-gray-300 dark:text-gray-700">•</span>
                                 <span class="text-[9px] font-black text-gray-900 dark:text-gray-300 uppercase"><?php echo htmlspecialchars($news['author_name'] ?: 'Rédaction'); ?></span>
@@ -179,7 +214,7 @@ include 'includes/header.php';
                             </div>
 
                             <h3 class="text-2xl font-bold font-serif leading-tight group-hover:text-red-700 dark:group-hover:text-red-500 transition-colors text-black dark:text-white mb-3">
-                                <a href="<?php echo getUrl('news', $news['id'], $news['slug']); ?>">
+                                <a href="<?php echo getUrl('news', $news['id'], $news['slug'], $news['nanoid'] ?? null); ?>">
                                     <?php echo htmlspecialchars($news['title']); ?>
                                 </a>
                             </h3>

@@ -90,16 +90,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 header('Location: ' . SITE_URL . '/admin/projets?msg=updated');
                 exit;
             } else {
-                $stmt = $pdo->prepare("INSERT INTO projects (title, slug, category, location, status, description, content, embed_code, beneficiaries, image, published, author_id) VALUES (:title, :slug, :category, :location, :status, :description, :content, :embed_code, :beneficiaries, :image, :published, :author_id)");
-                $stmt->execute([
-                    ':title' => $title, ':slug' => $slug, ':category' => $category, ':location' => $location,
-                    ':status' => $status, ':description' => $description, ':content' => $content, ':embed_code' => $embed_code,
-                    ':beneficiaries' => $beneficiaries, ':image' => $image_name, ':published' => $published,
-                    ':author_id' => $_SESSION['admin_id']
-                ]);
-                logAdminAction($_SESSION['admin_id'], "création projet : $title");
-                header('Location: ' . SITE_URL . '/admin/projets?msg=created');
-                exit;
+                    // Générer un NanoID unique pour ce projet
+                    $chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+                    do {
+                        $nanoid = '';
+                        for ($__i = 0; $__i < 10; $__i++) { $nanoid .= $chars[random_int(0, 61)]; }
+                        $chk = $pdo->prepare("SELECT 1 FROM projects WHERE nanoid = ?");
+                        $chk->execute([$nanoid]);
+                    } while ($chk->fetch());
+
+                    $stmt = $pdo->prepare("INSERT INTO projects (nanoid, title, slug, category, location, status, description, content, embed_code, beneficiaries, image, published, author_id) VALUES (:nanoid, :title, :slug, :category, :location, :status, :description, :content, :embed_code, :beneficiaries, :image, :published, :author_id)");
+                    $stmt->execute([
+                        ':nanoid' => $nanoid, ':title' => $title, ':slug' => $slug, ':category' => $category, ':location' => $location,
+                        ':status' => $status, ':description' => $description, ':content' => $content, ':embed_code' => $embed_code,
+                        ':beneficiaries' => $beneficiaries, ':image' => $image_name, ':published' => $published,
+                        ':author_id' => $_SESSION['admin_id']
+                    ]);
+                    logAdminAction($_SESSION['admin_id'], "création projet : $title");
+                    header('Location: ' . SITE_URL . '/admin/projets?msg=created');
+                    exit;
             }
         } catch (PDOException $e) {
             $error = "Erreur SQL : " . $e->getMessage();
@@ -240,10 +249,19 @@ $current_page = 'projects';
                     <div class="bg-white dark:bg-slate-900 p-8 rounded-[3rem] shadow-sm border border-slate-200 dark:border-slate-800 space-y-6">
                         <label class="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] ml-2">Image Principale</label>
                         <div class="group relative aspect-video bg-slate-50 dark:bg-slate-800 rounded-3xl overflow-hidden border-2 border-dashed border-slate-200 dark:border-slate-700 flex flex-col items-center justify-center text-center p-4">
-                            <?php if($project && $project['image']): ?>
+                            <?php 
+                            $image_exists = ($project && $project['image'] && file_exists('../uploads/' . $project['image']));
+                            if($project && $project['image'] && $image_exists): 
+                            ?>
                                 <img src="<?php echo SITE_URL; ?>/uploads/<?php echo $project['image']; ?>" id="preview-img" class="absolute inset-0 w-full h-full object-cover">
                             <?php else: ?>
-                                <img id="preview-img" class="absolute inset-0 w-full h-full object-cover hidden">
+                                <img id="preview-img" class="absolute inset-0 w-full h-full object-cover hidden" src="">
+                                <?php if($project && $project['image'] && !$image_exists): ?>
+                                    <!-- Debug: File <?php echo $project['image']; ?> not found in ../uploads/ -->
+                                    <div class="absolute inset-0 flex items-center justify-center bg-rose-500/10 text-rose-500 p-4 text-center">
+                                        <div class="text-[10px] font-black uppercase">Fichier introuvable</div>
+                                    </div>
+                                <?php endif; ?>
                             <?php endif; ?>
                             <div id="placeholder-ui" class="<?php echo ($project && $project['image']) ? 'hidden' : ''; ?> flex flex-col items-center">
                                 <svg class="w-10 h-10 text-slate-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
@@ -390,7 +408,7 @@ $current_page = 'projects';
             formData.append('data[beneficiaries]', beneficiaries);
             formData.append('data[embed_code]', embed_code);
             
-            fetch('api/autosave.php', {
+            fetch('<?php echo SITE_URL; ?>/admin/api/autosave.php', {
                 method: 'POST',
                 body: formData
             })

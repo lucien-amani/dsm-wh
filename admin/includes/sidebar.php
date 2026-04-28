@@ -5,8 +5,8 @@ $current_page = $current_page ?? '';
     <!-- Logo & Brand -->
     <div class="h-20 flex items-center px-8 border-b border-slate-100 dark:border-slate-800/50 shrink-0">
         <div class="flex items-center gap-3">
-            <div class="w-10 h-10 bg-emerald-600 rounded-xl flex items-center justify-center text-white font-black shadow-lg shadow-emerald-500/20 transform hover:rotate-6 transition-transform">
-                S
+            <div class="w-10 h-10 bg-emerald-600 rounded-xl flex items-center justify-center text-white font-black shadow-lg shadow-emerald-500/20 transform hover:rotate-6 transition-transform overflow-hidden">
+                <img src="<?php echo SITE_URL; ?>/assets/logo/logo-dsm.jpg" class="w-full h-full object-cover">
             </div>
             <div class="flex flex-col">
                 <span class="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tighter leading-none">DSM <span class="text-emerald-600">Admin</span></span>
@@ -100,6 +100,20 @@ $current_page = $current_page ?? '';
             <?php endif; ?>
         </a>
 
+        <a href="<?php echo SITE_URL; ?>/admin/messages" 
+           class="flex items-center gap-3.5 px-4 py-3 rounded-2xl transition-all duration-300 group <?php echo $current_page === 'messages' ? 'bg-emerald-600 text-white shadow-xl shadow-emerald-600/20' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-emerald-600'; ?>">
+            <div class="w-8 h-8 rounded-lg flex items-center justify-center <?php echo $current_page === 'messages' ? 'bg-white/20' : 'bg-slate-100 dark:bg-slate-800 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-900/20'; ?>">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+            </div>
+            <span class="font-bold text-sm">Messages</span>
+            <?php 
+                $new_msgs = $pdo_c->query("SELECT COUNT(*) FROM contact_messages WHERE status = 'Nouveau'")->fetchColumn();
+                if($new_msgs > 0): 
+            ?>
+                <span class="ml-auto bg-blue-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full animate-pulse"><?php echo $new_msgs; ?></span>
+            <?php endif; ?>
+        </a>
+
         <a href="<?php echo SITE_URL; ?>/admin/newsletter" 
            class="flex items-center gap-3.5 px-4 py-3 rounded-2xl transition-all duration-300 group <?php echo $current_page === 'newsletter' ? 'bg-emerald-600 text-white shadow-xl shadow-emerald-600/20' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-emerald-600'; ?>">
             <div class="w-8 h-8 rounded-lg flex items-center justify-center <?php echo $current_page === 'newsletter' ? 'bg-white/20' : 'bg-slate-100 dark:bg-slate-800 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-900/20'; ?>">
@@ -180,60 +194,94 @@ $current_page = $current_page ?? '';
     </div>
 </aside>
 
-<!-- Overlays for mobile -->
-<div id="sidebar-overlay" class="fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-sm hidden lg:hidden"></div>
+<!-- Admin Navigation (Classic Bottom Bar) -->
+<div class="lg:hidden fixed bottom-0 left-0 right-0 w-full h-16 bg-slate-950 z-[100] border-t border-white/5 flex items-center justify-around">
+    <!-- Dashboard -->
+    <a href="<?php echo SITE_URL; ?>/admin/tableau-de-bord" class="flex-1 flex flex-col items-center justify-center gap-0.5 group">
+        <svg class="w-5 h-5 transition-colors <?php echo $current_page === 'dashboard' ? 'text-emerald-500' : 'text-gray-400 group-active:text-gray-200'; ?>" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+        <span class="text-[9px] font-bold uppercase tracking-tighter <?php echo $current_page === 'dashboard' ? 'text-emerald-500' : 'text-gray-500'; ?>">Dashboard</span>
+    </a>
+
+    <!-- News -->
+    <a href="<?php echo SITE_URL; ?>/admin/actualites" class="flex-1 flex flex-col items-center justify-center gap-0.5 group">
+        <svg class="w-5 h-5 transition-colors <?php echo $current_page === 'news' ? 'text-emerald-500' : 'text-gray-400 group-active:text-gray-200'; ?>" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"/></svg>
+        <span class="text-[9px] font-bold uppercase tracking-tighter <?php echo $current_page === 'news' ? 'text-emerald-500' : 'text-gray-500'; ?>">Actualités</span>
+    </a>
+
+    <!-- Central Action (Projets) -->
+    <a href="<?php echo SITE_URL; ?>/admin/projets" class="flex-1 flex flex-col items-center justify-center gap-0.5 group">
+        <div class="w-10 h-10 bg-emerald-600 rounded-none flex items-center justify-center text-white active:bg-emerald-700 transition-colors">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+        </div>
+        <span class="text-[9px] font-bold uppercase tracking-tighter text-gray-500">Projets</span>
+    </a>
+
+    <!-- Messages -->
+    <a href="<?php echo SITE_URL; ?>/admin/messages" class="flex-1 flex flex-col items-center justify-center gap-0.5 group">
+        <div class="relative">
+            <svg class="w-5 h-5 transition-colors <?php echo $current_page === 'messages' ? 'text-emerald-500' : 'text-gray-400 group-active:text-gray-200'; ?>" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+            <?php if($new_msgs > 0): ?><span class="absolute -top-0.5 -right-0.5 w-2 h-2 bg-rose-600 rounded-full"></span><?php endif; ?>
+        </div>
+        <span class="text-[9px] font-bold uppercase tracking-tighter <?php echo $current_page === 'messages' ? 'text-emerald-500' : 'text-gray-500'; ?>">Messages</span>
+    </a>
+
+    <!-- Menu Trigger -->
+    <button onclick="toggleSidebar()" class="flex-1 flex flex-col items-center justify-center gap-0.5 group">
+        <svg class="w-5 h-5 text-gray-400 group-active:text-gray-200 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"/></svg>
+        <span class="text-[9px] font-bold uppercase tracking-tighter text-gray-500">Menu</span>
+    </button>
+</div>
+
+<!-- Overlays -->
+<div id="sidebar-overlay" onclick="toggleSidebar()" class="fixed inset-0 z-[40] bg-slate-950/60 backdrop-blur-md hidden"></div>
 
 <!-- Theme & Sidebar JS -->
 <script>
     // Theme Switcher Logic
     if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
         document.documentElement.classList.add('dark');
-        document.getElementById('theme-toggle-light-icon').classList.remove('hidden');
+        const lightIcon = document.getElementById('theme-toggle-light-icon');
+        if (lightIcon) lightIcon.classList.remove('hidden');
     } else {
         document.documentElement.classList.remove('dark');
-        document.getElementById('theme-toggle-dark-icon').classList.remove('hidden');
+        const darkIcon = document.getElementById('theme-toggle-dark-icon');
+        if (darkIcon) darkIcon.classList.remove('hidden');
     }
 
     const themeToggleBtn = document.getElementById('theme-toggle');
-    themeToggleBtn.addEventListener('click', function() {
-        document.getElementById('theme-toggle-dark-icon').classList.toggle('hidden');
-        document.getElementById('theme-toggle-light-icon').classList.toggle('hidden');
+    if (themeToggleBtn) {
+        themeToggleBtn.addEventListener('click', function() {
+            document.getElementById('theme-toggle-dark-icon').classList.toggle('hidden');
+            document.getElementById('theme-toggle-light-icon').classList.toggle('hidden');
 
-        if (localStorage.getItem('color-theme')) {
-            if (localStorage.getItem('color-theme') === 'light') {
-                document.documentElement.classList.add('dark');
-                localStorage.setItem('color-theme', 'dark');
+            if (localStorage.getItem('color-theme')) {
+                if (localStorage.getItem('color-theme') === 'light') {
+                    document.documentElement.classList.add('dark');
+                    localStorage.setItem('color-theme', 'dark');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                    localStorage.setItem('color-theme', 'light');
+                }
             } else {
-                document.documentElement.classList.remove('dark');
-                localStorage.setItem('color-theme', 'light');
+                if (document.documentElement.classList.contains('dark')) {
+                    document.documentElement.classList.remove('dark');
+                    localStorage.setItem('color-theme', 'light');
+                } else {
+                    document.documentElement.classList.add('dark');
+                    localStorage.setItem('color-theme', 'dark');
+                }
             }
-        } else {
-            if (document.documentElement.classList.contains('dark')) {
-                document.documentElement.classList.remove('dark');
-                localStorage.setItem('color-theme', 'light');
-            } else {
-                document.documentElement.classList.add('dark');
-                localStorage.setItem('color-theme', 'dark');
-            }
-        }
-        // Force re-render of TinyMCE if exists
-        if (window.tinymce) {
-            const isDark = document.documentElement.classList.contains('dark');
-            tinymce.remove();
-            tinymce.init({
-                selector: '#content',
-                skin: isDark ? 'oxide-dark' : 'oxide',
-                content_css: isDark ? 'dark' : 'default',
-                // other settings same as before...
-            });
-        }
-    });
+        });
+    }
 
-    // Mobile Sidebar Toggle (to be called by header)
+    // Mobile Sidebar Toggle
     function toggleSidebar() {
         const sidebar = document.getElementById('sidebar');
         const overlay = document.getElementById('sidebar-overlay');
-        sidebar.classList.toggle('-translate-x-full');
-        overlay.classList.toggle('hidden');
+        if (sidebar && overlay) {
+            sidebar.classList.toggle('-translate-x-full');
+            overlay.classList.toggle('hidden');
+        }
     }
 </script>
+

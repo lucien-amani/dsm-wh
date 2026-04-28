@@ -118,15 +118,15 @@
                     <ul class="space-y-3">
                         <?php
                         $nav_links = [
-                            ['href' => '/', 'label' => 'Accueil', 'icon' => 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6'],
-                            ['href' => '/a-propos', 'label' => 'À Propos', 'icon' => 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z'],
-                            ['href' => '/actualites', 'label' => 'Actualités & Blog', 'icon' => 'M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z'],
-                            ['href' => '/projets', 'label' => 'Projets réalisés', 'icon' => 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4'],
-                            ['href' => '/contact', 'label' => 'Contact', 'icon' => 'M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z'],
+                            ['route' => 'home', 'label' => 'Accueil', 'icon' => 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6'],
+                            ['route' => 'about', 'label' => 'À Propos', 'icon' => 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z'],
+                            ['route' => 'news_list', 'label' => 'Actualités & Blog', 'icon' => 'M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z'],
+                            ['route' => 'projects_list', 'label' => 'Projets réalisés', 'icon' => 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4'],
+                            ['route' => 'contact', 'label' => 'Contact', 'icon' => 'M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z'],
                         ];
                         foreach ($nav_links as $link): ?>
                         <li>
-                            <a href="<?php echo SITE_URL . $link['href']; ?>"
+                            <a href="<?php echo $router->generate($link['route']); ?>"
                                class="group flex items-center gap-2.5 text-slate-400 hover:text-white transition-colors text-sm">
                                 <svg class="w-3.5 h-3.5 text-[rgb(var(--color-primary))]/50 group-hover:text-[rgb(var(--color-primary))] transition-colors flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="<?php echo $link['icon']; ?>"/>
@@ -227,13 +227,13 @@
                     <div class="flex items-center gap-1 flex-wrap justify-center">
                         <?php
                         $legal = [
-                            ['href' => '/politique-confidentialite', 'label' => 'Confidentialité'],
-                            ['href' => '/cookies', 'label' => 'Cookies'],
-                            ['href' => '/mentions-legales', 'label' => 'Mentions légales'],
+                            ['route' => 'privacy', 'label' => 'Confidentialité'],
+                            ['route' => 'cookies', 'label' => 'Cookies'],
+                            ['route' => 'mentions-legales', 'label' => 'Mentions légales'],
                         ];
                         foreach ($legal as $i => $item): ?>
                         <?php if ($i > 0): ?><span class="text-slate-700 text-xs">·</span><?php endif; ?>
-                        <a href="<?php echo SITE_URL . $item['href']; ?>"
+                        <a href="<?php echo $router->generate($item['route']); ?>"
                            class="text-slate-500 text-xs hover:text-[rgb(var(--color-primary))] transition-colors px-1">
                             <?php echo $item['label']; ?>
                         </a>
@@ -289,6 +289,130 @@
                         showToast("Une erreur est survenue.", 'error');
                     }
                 });
+            }
+        });
+    </script>
+    <!-- Cookie Consent Banner -->
+    <div id="cookie-banner" class="fixed bottom-0 left-0 right-0 z-[500] p-4 transform translate-y-full transition-transform duration-500 ease-in-out">
+        <div class="max-w-7xl mx-auto">
+            <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-gray-100 dark:border-white/10 p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-6">
+                <div class="flex-1">
+                    <h4 class="text-lg font-bold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
+                        <svg class="w-6 h-6 text-[rgb(var(--color-primary))]" fill="currentColor" viewBox="0 0 24 24"><path d="M21.598 11.064a1.006 1.006 0 0 0-.854-.172A11.59 11.59 0 0 0 12 2c-5.856 0-10.74 4.312-11.498 9.936a1 1 0 0 0 .562 1.036c3.232 1.457 5.61 4.417 6.342 7.848.1.474.52.812 1.004.812h.016a5.5 5.5 0 0 1 5.37-4.14 5.503 5.503 0 0 1 5.484 5.068 1.003 1.003 0 0 0 1.258.872A11.593 11.593 0 0 0 22 12c0-.323-.016-.643-.046-.958a1.004 1.004 0 0 0-.356-.978zM4.5 11a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zM10 8.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm2.5 7.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm4 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm1.5-6.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z"/></svg>
+                        Respect de votre vie privée
+                    </h4>
+                    <p class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+                        Nous utilisons des cookies pour optimiser votre expérience, analyser le trafic et personnaliser les contenus. 
+                        Vous pouvez accepter tous les cookies, les refuser ou personnaliser vos préférences.
+                    </p>
+                </div>
+                <div class="flex flex-wrap items-center gap-3 w-full md:w-auto">
+                    <button onclick="acceptAllCookies()" class="flex-1 md:flex-none px-6 py-3 bg-[rgb(var(--color-primary))] text-white rounded-xl text-sm font-bold hover:bg-[rgb(var(--color-primary-dark))] transition-all whitespace-nowrap">
+                        Tout accepter
+                    </button>
+                    <button onclick="refuseAllCookies()" class="flex-1 md:flex-none px-6 py-3 bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-gray-300 rounded-xl text-sm font-bold hover:bg-gray-200 dark:hover:bg-slate-700 transition-all whitespace-nowrap">
+                        Tout refuser
+                    </button>
+                    <button onclick="toggleCookieConfig()" class="w-full md:w-auto px-6 py-3 border border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-400 rounded-xl text-sm font-bold hover:bg-gray-50 dark:hover:bg-white/5 transition-all">
+                        Paramétrer
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cookie Config Modal -->
+    <div id="cookie-modal" class="fixed inset-0 z-[600] hidden items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+        <div class="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-lg shadow-2xl border border-white/10 overflow-hidden animate-slide-up">
+            <div class="p-8 border-b border-gray-100 dark:border-white/5 flex justify-between items-center">
+                <h3 class="text-2xl font-black text-gray-900 dark:text-white">Préférences Cookies</h3>
+                <button onclick="toggleCookieConfig()" class="text-gray-400 hover:text-gray-600 dark:hover:text-white">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l18 18"/></svg>
+                </button>
+            </div>
+            <div class="p-8 space-y-6 max-h-[60vh] overflow-y-auto">
+                <div class="flex items-start justify-between gap-4">
+                    <div class="flex-1">
+                        <p class="font-bold text-gray-900 dark:text-white mb-1">Essentiels</p>
+                        <p class="text-xs text-gray-500">Nécessaires au bon fonctionnement du site. Ne peuvent pas être désactivés.</p>
+                    </div>
+                    <div class="w-12 h-6 bg-[rgb(var(--color-primary))] rounded-full relative opacity-50 cursor-not-allowed">
+                        <div class="absolute right-1 top-1 w-4 h-4 bg-white rounded-full"></div>
+                    </div>
+                </div>
+                <div class="flex items-start justify-between gap-4">
+                    <div class="flex-1">
+                        <p class="font-bold text-gray-900 dark:text-white mb-1">Analytiques</p>
+                        <p class="text-xs text-gray-500">Nous permettent de comprendre comment vous utilisez le site pour l'améliorer.</p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="cookie-analytics" class="sr-only peer" checked>
+                        <div class="w-12 h-6 bg-gray-200 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[rgb(var(--color-primary))]"></div>
+                    </label>
+                </div>
+                <div class="flex items-start justify-between gap-4">
+                    <div class="flex-1">
+                        <p class="font-bold text-gray-900 dark:text-white mb-1">Marketing</p>
+                        <p class="text-xs text-gray-500">Utilisés pour vous proposer des contenus et publicités adaptés à vos intérêts.</p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="cookie-marketing" class="sr-only peer">
+                        <div class="w-12 h-6 bg-gray-200 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[rgb(var(--color-primary))]"></div>
+                    </label>
+                </div>
+            </div>
+            <div class="p-8 bg-gray-50 dark:bg-slate-800/50 flex gap-4">
+                <button onclick="saveCookiePreferences()" class="flex-1 bg-[rgb(var(--color-primary))] text-white py-4 rounded-2xl font-bold hover:bg-[rgb(var(--color-primary-dark))] transition-all active:scale-95">
+                    Enregistrer mes choix
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function acceptAllCookies() {
+            localStorage.setItem('cookieConsent', 'all');
+            hideCookieBanner();
+        }
+
+        function refuseAllCookies() {
+            localStorage.setItem('cookieConsent', 'none');
+            hideCookieBanner();
+        }
+
+        function saveCookiePreferences() {
+            const analytics = document.getElementById('cookie-analytics').checked;
+            const marketing = document.getElementById('cookie-marketing').checked;
+            localStorage.setItem('cookieConsent', JSON.stringify({ analytics, marketing }));
+            toggleCookieConfig();
+            hideCookieBanner();
+        }
+
+        function hideCookieBanner() {
+            const banner = document.getElementById('cookie-banner');
+            if (banner) banner.classList.add('translate-y-full');
+        }
+
+        function toggleCookieConfig() {
+            const modal = document.getElementById('cookie-modal');
+            if (modal) {
+                if (modal.classList.contains('hidden')) {
+                    modal.classList.remove('hidden');
+                    modal.classList.add('flex');
+                } else {
+                    modal.classList.add('hidden');
+                    modal.classList.remove('flex');
+                }
+            }
+        }
+
+        // Afficher la bannière si pas de consentement
+        document.addEventListener('DOMContentLoaded', function() {
+            if (!localStorage.getItem('cookieConsent')) {
+                setTimeout(() => {
+                    const banner = document.getElementById('cookie-banner');
+                    if (banner) banner.classList.remove('translate-y-full');
+                }, 1000);
             }
         });
     </script>

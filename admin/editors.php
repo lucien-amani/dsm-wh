@@ -2,7 +2,7 @@
 require_once '../config/database.php';
 require_once '../config/mail.php';
 require_once '../config/helpers.php';
-require_once __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__ . '/../config/router.php';
 require_once 'includes/auth.php';
 
 // Seul un Superadmin ou Admin peut accéder à la gestion des éditeurs
@@ -17,10 +17,11 @@ $success = '';
 
 // Action: Supprimer un éditeur
 if (isset($_GET['delete'])) {
-    $id = (int)$_GET['delete'];
+    $id_param = $_GET['delete'];
+    $id = is_numeric($id_param) ? (int)$id_param : ($hashids->decode($id_param)[0] ?? 0);
+    
     // On ne peut pas supprimer soi-même
-    if ($id !== (int)$_SESSION['admin_id']) {
-        // Optionnel : récupérer le nom avant suppression
+    if ($id && $id !== (int)$_SESSION['admin_id']) {
         $check = $pdo->prepare("SELECT full_name FROM users WHERE id = ?");
         $check->execute([$id]);
         $name = $check->fetchColumn() ?: "ID $id";
@@ -29,7 +30,27 @@ if (isset($_GET['delete'])) {
         $stmt->execute([':id' => $id]);
         
         logAdminAction($_SESSION['admin_id'], "suppression éditeur : $name");
-        header('Location: ' . SITE_URL . '/admin/editors?msg=deleted');
+        header('Location: ' . SITE_URL . '/admin/utilisateurs?msg=deleted');
+        exit;
+    }
+}
+
+// Action: Toggle Status (Activer/Désactiver)
+if (isset($_GET['toggle'])) {
+    $id_param = $_GET['toggle'];
+    $id = is_numeric($id_param) ? (int)$id_param : ($hashids->decode($id_param)[0] ?? 0);
+    
+    if ($id && $id !== (int)$_SESSION['admin_id']) {
+        $stmt = $pdo->prepare("UPDATE users SET status = 1 - status WHERE id = :id AND role = 'Editor'");
+        $stmt->execute([':id' => $id]);
+        
+        $check = $pdo->prepare("SELECT full_name, status FROM users WHERE id = ?");
+        $check->execute([$id]);
+        $res = $check->fetch();
+        $status_txt = $res['status'] ? 'activation' : 'désactivation';
+        
+        logAdminAction($_SESSION['admin_id'], "$status_txt éditeur : " . $res['full_name']);
+        header('Location: ' . SITE_URL . '/admin/utilisateurs?msg=updated');
         exit;
     }
 }
@@ -69,7 +90,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if (empty($password)) {
                     $error = "Le mot de passe est requis pour un nouvel éditeur.";
                 } else {
-                    $stmt = $pdo->prepare("INSERT INTO users (full_name, email, phone, username, password, role) VALUES (:full_name, :email, :phone, :username, :password, 'Editor')");
+                    $stmt = $pdo->prepare("INSERT INTO users (full_name, email, phone, username, password, role, status) VALUES (:full_name, :email, :phone, :username, :password, 'Editor', 1)");
                     $stmt->execute([
                         ':full_name' => $full_name,
                         ':email' => $email,
@@ -155,321 +176,325 @@ $current_page = 'editors';
 // Si édition, on récupère les infos
 $edit_editor = null;
 if (isset($_GET['edit'])) {
-    $stmt = $pdo->prepare("SELECT * FROM users WHERE id = :id AND role = 'Editor'");
-    $stmt->execute([':id' => $_GET['edit']]);
-    $edit_editor = $stmt->fetch();
+    $edit_id_param = $_GET['edit'];
+    $edit_id = is_numeric($edit_id_param) ? (int)$edit_id_param : ($hashids->decode($edit_id_param)[0] ?? 0);
+    
+    if ($edit_id) {
+        $stmt = $pdo->prepare("SELECT * FROM users WHERE id = :id AND role = 'Editor'");
+        $stmt->execute([':id' => $edit_id]);
+        $edit_editor = $stmt->fetch();
+    }
 }
 ?>
 <!DOCTYPE html>
-<html lang="fr" class="h-full">
+<html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Équipe - DSM ADMIN</title>
+    <title>Utilisateurs - DSM ADMIN</title>
+    <link rel="icon" type="image/png" href="<?php echo SITE_URL; ?>/assets/logo/logo-dsm.jpg">
     <link rel="stylesheet" href="<?php echo SITE_URL; ?>/dist/output.css">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', sans-serif; }
-        h1, h2, h3, .font-outfit { font-family: 'Outfit', sans-serif; }
-        .glass-panel { 
-            background: rgba(255, 255, 255, 0.8); 
-            backdrop-filter: blur(20px); 
-            border: 1px solid rgba(255, 255, 255, 0.6); 
-            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
-        }
-        .dark .glass-panel { 
-            background: rgba(15, 23, 42, 0.8); 
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
-        }
-        .input-premium {
+        body { font-family: 'Outfit', sans-serif; }
+        .font-inter { font-family: 'Inter', sans-serif; }
+        .glass-panel { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.5); }
+        .dark .glass-panel { background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 255, 255, 0.05); }
+        
+        .input-clean {
             width: 100%;
-            padding-left: 3rem;
-            padding-right: 1.25rem;
-            padding-top: 1rem;
-            padding-bottom: 1rem;
-            background-color: #fff;
-            border: 1px solid #e2e8f0;
-            border-radius: 1rem;
-            font-size: 0.875rem;
+            padding: 1rem 1.25rem;
+            background: rgba(255,255,255,0.5);
+            border: 1px solid rgba(0,0,0,0.05);
+            border-radius: 1.2rem;
+            font-size: 0.9rem;
             font-weight: 600;
+            color: #1e293b;
             transition: all 0.3s ease;
+        }
+        .dark .input-clean {
+            background: rgba(15, 23, 42, 0.3);
+            border-color: rgba(255,255,255,0.05);
+            color: #f8fafc;
+        }
+        .input-clean:focus {
+            background: #fff;
+            border-color: #10b981;
+            box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
             outline: none;
         }
-        .dark .input-premium {
-            background-color: rgba(15, 23, 42, 0.5);
-            border-color: #1e293b;
-            color: #fff;
+        .dark .input-clean:focus {
+            background: rgba(15, 23, 42, 0.6);
         }
-        .input-premium:focus {
-            box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
-            border-color: #4f46e5;
-        }
-        .label-premium {
-            text-transform: uppercase;
-            letter-spacing: 0.2em;
-            font-size: 10px;
+        
+        .label-clean {
+            font-size: 0.7rem;
             font-weight: 900;
             color: #94a3b8;
-            margin-left: 0.5rem;
+            margin-bottom: 0.6rem;
             display: block;
-            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            margin-left: 0.5rem;
         }
-        .dark .label-premium {
-            color: #64748b;
-        }
-        .btn-premium {
-            position: relative;
-            overflow: hidden;
-            padding: 1rem 2rem;
-            background-color: #4f46e5;
+        
+        .btn-clean {
+            padding: 1.1rem 2rem;
+            background: #10b981;
             color: #fff;
+            border-radius: 1.5rem;
             font-weight: 900;
-            border-radius: 1rem;
-            transition: all 0.3s ease;
-            box-shadow: 0 20px 25px -5px rgba(79, 70, 229, 0.1), 0 10px 10px -5px rgba(79, 70, 229, 0.04);
+            font-size: 0.75rem;
             text-transform: uppercase;
             letter-spacing: 0.1em;
-            font-size: 11px;
-            display: flex;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            display: inline-flex;
             align-items: center;
             justify-content: center;
             gap: 0.75rem;
-            border: none;
-            cursor: pointer;
+            box-shadow: 0 10px 20px -5px rgba(16, 185, 129, 0.3);
         }
-        .btn-premium:hover {
-            box-shadow: 0 25px 30px -5px rgba(79, 70, 229, 0.2);
-            transform: translateY(-2px);
-            background-color: #4338ca;
+        .btn-clean:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 20px 25px -5px rgba(16, 185, 129, 0.4);
+            filter: brightness(1.1);
         }
-        .btn-premium:active {
-            transform: scale(0.95);
+        
+        .btn-secondary {
+            background: #f1f5f9;
+            color: #475569;
+            box-shadow: none;
+        }
+        .dark .btn-secondary {
+            background: rgba(255,255,255,0.05);
+            color: #94a3b8;
+        }
+        .btn-secondary:hover {
+            background: #e2e8f0;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.4rem 1rem;
+            border-radius: 2rem;
+            font-size: 0.65rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            transition: all 0.3s ease;
         }
     </style>
 </head>
-<body class="bg-slate-50 dark:bg-slate-950 flex transition-colors duration-300 min-h-screen">
+<body class="bg-slate-50 dark:bg-slate-950 flex transition-colors duration-300 min-h-screen font-inter">
     
     <?php include 'includes/sidebar.php'; ?>
     <?php include 'includes/toast.php'; ?>
 
-    <main class="flex-1 lg:ml-72 flex flex-col min-w-0">
-        <!-- Modern Header -->
-        <header class="h-28 flex items-center justify-between px-10 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl sticky top-0 z-40 border-b border-slate-200 dark:border-slate-800/50">
-            <div class="flex items-center gap-6">
-                <div class="w-14 h-14 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-600/30">
-                    <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
-                </div>
-                <div>
-                    <h1 class="text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tighter leading-none">Gestion <span class="text-indigo-600">Équipe</span></h1>
-                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-[0.5em] mt-2">Membres & Rôles</p>
-                </div>
+    <main class="flex-1 lg:ml-72 flex flex-col min-w-0 overflow-hidden">
+        <!-- Header -->
+        <header class="h-24 flex items-center justify-between px-8 bg-white/50 dark:bg-slate-900/50 backdrop-blur-md sticky top-0 z-40 border-b border-slate-200 dark:border-slate-800/50">
+            <div>
+                <h1 class="text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">Gestion de <span class="text-emerald-600">l'Équipe</span></h1>
+                <p class="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] ml-1">Éditeurs & Collaborateurs</p>
             </div>
             
-            <div class="hidden sm:flex items-center gap-3 px-6 py-3 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700/50 shadow-sm">
-                <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-                <span class="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest">Système Opérationnel</span>
+            <div class="flex flex-wrap items-center gap-4">
+                <?php if (!isset($_GET['add']) && !$edit_editor): ?>
+                    <a href="?add=1" class="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-4 rounded-[1.5rem] font-black uppercase tracking-widest text-[10px] shadow-xl shadow-emerald-600/20 hover:-translate-y-1 transition-all flex items-center gap-3">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                        Nouveau Membre
+                    </a>
+                <?php endif; ?>
+                <div class="hidden sm:block text-right border-l border-slate-200 dark:border-slate-800 pl-4">
+                    <p class="text-xs font-black text-slate-900 dark:text-white uppercase tracking-widest"><?php echo formatDateFR(date('Y-m-d')); ?></p>
+                    <p class="text-[9px] font-bold text-emerald-600 uppercase tracking-widest">Panel Administratif</p>
+                </div>
             </div>
         </header>
 
-        <div class="p-10 space-y-10 animate-fade-in max-w-[1600px] mx-auto w-full">
-            
-            <div class="grid grid-cols-1 xl:grid-cols-12 gap-10">
-                
-                <!-- Registration Form Card -->
-                <div class="xl:col-span-4">
-                    <div class="glass-panel p-10 rounded-[3.5rem] sticky top-36">
-                        <div class="flex items-center gap-4 mb-8">
-                            <div class="w-2 h-8 bg-indigo-600 rounded-full"></div>
-                            <h2 class="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight">
-                                <?php echo $edit_editor ? 'Mise à Jour' : 'Ajouter un Membre'; ?>
-                            </h2>
+        <div class="p-8 lg:p-12 animate-fade-in">
+            <?php if (isset($_GET['add']) || $edit_editor): ?>
+                <!-- FORM VIEW (Similaire au profil) -->
+                <div class="max-w-4xl mx-auto space-y-8">
+                    <!-- Header avec bouton retour -->
+                    <div class="flex items-center justify-between mb-8">
+                        <a href="utilisateurs" class="group flex items-center gap-3 px-6 py-3 rounded-2xl bg-white dark:bg-slate-900 text-slate-500 hover:text-emerald-600 border border-slate-200 dark:border-slate-800 transition-all">
+                            <svg class="w-5 h-5 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                            <span class="text-[10px] font-black uppercase tracking-widest">Retour à la liste</span>
+                        </a>
+                        <div class="text-right">
+                            <span class="text-[10px] font-black text-emerald-600 uppercase tracking-[0.4em] block mb-1">Configuration</span>
+                            <h2 class="text-2xl font-black text-slate-900 dark:text-white tracking-tighter uppercase"><?php echo $edit_editor ? 'Édition Profil' : 'Nouveau Membre'; ?></h2>
                         </div>
-                        
-                        <form method="POST" class="space-y-6">
-                            <input type="hidden" name="editor_id" value="<?php echo $edit_editor['id'] ?? ''; ?>">
-                            
-                            <!-- Full Name -->
-                            <div class="relative group">
-                                <label class="label-premium">Nom Complet</label>
-                                <div class="absolute bottom-4 left-4 text-slate-400 group-focus-within:text-indigo-600 transition-colors">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-                                </div>
-                                <input type="text" name="full_name" required placeholder="Ex: Jean-Luc Kivu" value="<?php echo htmlspecialchars($edit_editor['full_name'] ?? ''); ?>" class="input-premium">
-                            </div>
-
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <!-- Email -->
-                                <div class="relative group">
-                                    <label class="label-premium">E-mail Professionnel</label>
-                                    <div class="absolute bottom-4 left-4 text-slate-400 group-focus-within:text-indigo-600 transition-colors">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-                                    </div>
-                                    <input type="email" name="email" required placeholder="contact@dsm.cd" value="<?php echo htmlspecialchars($edit_editor['email'] ?? ''); ?>" class="input-premium">
-                                </div>
-
-                                <!-- Phone -->
-                                <div class="relative group">
-                                    <label class="label-premium">Téléphone</label>
-                                    <div class="absolute bottom-4 left-4 text-slate-400 group-focus-within:text-indigo-600 transition-colors">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
-                                    </div>
-                                    <input type="text" name="phone" placeholder="+243..." value="<?php echo htmlspecialchars($edit_editor['phone'] ?? ''); ?>" class="input-premium">
-                                </div>
-                            </div>
-
-                            <!-- Username -->
-                            <div class="relative group">
-                                <label class="label-premium">Nom d'Utilisateur</label>
-                                <div class="absolute bottom-4 left-4 text-slate-400 group-focus-within:text-indigo-600 transition-colors">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
-                                </div>
-                                <input type="text" name="username" required placeholder="ex: j.kivu" value="<?php echo htmlspecialchars($edit_editor['username'] ?? ''); ?>" class="input-premium">
-                            </div>
-
-                            <!-- Password -->
-                            <div class="relative group">
-                                <label class="label-premium">Sécurité <?php echo $edit_editor ? '(Laissez vide si inchangé)' : ''; ?></label>
-                                <div class="absolute bottom-4 left-4 text-slate-400 group-focus-within:text-indigo-600 transition-colors">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 00-2 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
-                                </div>
-                                <input type="password" name="password" id="password_input" <?php echo $edit_editor ? '' : 'required'; ?> placeholder="••••••••••••"
-                                       class="input-premium pr-14">
-                                <button type="button" onclick="generatePassword()" class="absolute right-3 bottom-2.5 w-9 h-9 flex items-center justify-center bg-indigo-50 dark:bg-indigo-900/40 text-indigo-600 rounded-xl hover:bg-indigo-600 hover:text-white transition-all shadow-sm" title="Générer un mot de passe">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
-                                </button>
-                            </div>
-
-                            <div class="pt-4">
-                                <button type="submit" class="btn-premium w-full">
-                                    <span><?php echo $edit_editor ? 'Mettre à jour le membre' : 'Valider l\'inscription'; ?></span>
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 5l7 7-7 7M5 5l7 7-7 7"/></svg>
-                                </button>
-                                <?php if($edit_editor): ?>
-                                    <a href="editors" class="mt-4 block text-center text-[10px] font-black text-slate-400 hover:text-indigo-600 uppercase tracking-[0.2em] transition-colors italic">Annuler la modification</a>
-                                <?php endif; ?>
-                            </div>
-                        </form>
                     </div>
+
+                    <form method="POST" id="userForm" class="space-y-8">
+                        <input type="hidden" name="editor_id" value="<?php echo $edit_editor['id'] ?? ''; ?>">
+                        
+                        <!-- Identity Card -->
+                        <div class="bg-white dark:bg-slate-900 p-10 rounded-[3rem] shadow-sm border border-slate-200 dark:border-slate-800 text-center relative overflow-hidden group">
+                            <div class="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                            <div class="relative w-32 h-32 mx-auto mb-6">
+                                <div class="w-full h-full rounded-[2.5rem] bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-4xl font-black text-emerald-600 border-4 border-white dark:border-slate-800 shadow-xl">
+                                    <?php echo strtoupper(substr($edit_editor['full_name'] ?? 'N', 0, 1)); ?>
+                                </div>
+                            </div>
+                            <h2 class="text-2xl font-black text-slate-900 dark:text-white"><?php echo htmlspecialchars($edit_editor['full_name'] ?? 'Nouveau Membre'); ?></h2>
+                            <p class="text-[10px] font-black text-emerald-600 uppercase tracking-widest mt-1">Éditeur DSM</p>
+                        </div>
+
+                        <!-- Fields Card -->
+                        <div class="bg-white dark:bg-slate-900 p-10 rounded-[3rem] shadow-sm border border-slate-200 dark:border-slate-800 space-y-8">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <div class="space-y-3">
+                                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] ml-2">Nom Complet</label>
+                                    <input type="text" name="full_name" required value="<?php echo htmlspecialchars($edit_editor['full_name'] ?? ''); ?>" placeholder="Jean Dupont"
+                                           class="block w-full px-8 py-4 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl focus:ring-4 focus:ring-emerald-500/10 transition-all dark:text-white font-bold text-sm">
+                                </div>
+                                <div class="space-y-3">
+                                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] ml-2">Identifiant (Username)</label>
+                                    <input type="text" name="username" required value="<?php echo htmlspecialchars($edit_editor['username'] ?? ''); ?>" placeholder="jdupont"
+                                           class="block w-full px-8 py-4 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl focus:ring-4 focus:ring-emerald-500/10 transition-all dark:text-white font-bold text-sm">
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <div class="space-y-3">
+                                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] ml-2">E-mail Professionnel</label>
+                                    <input type="email" name="email" required value="<?php echo htmlspecialchars($edit_editor['email'] ?? ''); ?>" placeholder="jean@dsm.com"
+                                           class="block w-full px-8 py-4 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl focus:ring-4 focus:ring-emerald-500/10 transition-all dark:text-white font-bold text-sm">
+                                </div>
+                                <div class="space-y-3">
+                                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] ml-2">Téléphone</label>
+                                    <input type="text" name="phone" value="<?php echo htmlspecialchars($edit_editor['phone'] ?? ''); ?>" placeholder="+243..."
+                                           class="block w-full px-8 py-4 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl focus:ring-4 focus:ring-emerald-500/10 transition-all dark:text-white font-bold text-sm">
+                                </div>
+                            </div>
+
+                            <div class="pt-4 border-t border-slate-100 dark:border-slate-800/50 space-y-3">
+                                <label class="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] ml-2">Mot de passe <?php echo $edit_editor ? '(Laissez vide pour conserver)' : ''; ?></label>
+                                <div class="relative group">
+                                    <input type="password" name="password" id="password_input" <?php echo $edit_editor ? '' : 'required'; ?> placeholder="••••••••"
+                                           class="block w-full px-8 py-4 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl focus:ring-4 focus:ring-emerald-500/10 transition-all dark:text-white font-bold text-sm">
+                                    <button type="button" onclick="generatePassword()" class="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-center text-slate-400 hover:text-emerald-600 hover:border-emerald-600 transition-all shadow-sm" title="Générer">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center justify-end gap-4 pt-4">
+                                <a href="utilisateurs" class="px-8 py-5 text-slate-400 font-black uppercase tracking-widest text-[10px] hover:text-rose-600 transition-all">
+                                    Annuler
+                                </a>
+                                <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white px-10 py-5 rounded-[2rem] font-black uppercase tracking-widest text-[10px] shadow-xl shadow-emerald-600/20 hover:-translate-y-1 transition-all">
+                                    <?php echo $edit_editor ? 'Mettre à jour le membre' : 'Enregistrer le membre'; ?>
+                                </button>
+                            </div>
+                        </div>
+                    </form>
                 </div>
 
-                <!-- Members List Table -->
-                <div class="xl:col-span-8">
-                    <div class="glass-panel p-2 rounded-[3.5rem] overflow-hidden">
-                        <div class="p-8 pb-4 flex items-center justify-between">
-                            <div class="flex items-center gap-4">
-                                <div class="w-1.5 h-6 bg-emerald-500 rounded-full"></div>
-                                <h3 class="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">Liste de l'Équipe</h3>
+            <?php else: ?>
+                <!-- LIST VIEW -->
+                <div class="grid grid-cols-1 gap-12">
+                    <div class="col-span-1">
+                        <div class="mb-10 flex items-center justify-between">
+                            <div>
+                                <h2 class="text-sm font-black uppercase tracking-[0.3em] text-emerald-600 mb-2">Équipe active</h2>
+                                <p class="text-3xl font-black text-slate-900 dark:text-white"><?php echo count($editors); ?> <span class="text-slate-400">Éditeurs</span></p>
                             </div>
-                            <span class="px-4 py-2 bg-slate-100 dark:bg-slate-800 text-[10px] font-black text-slate-500 rounded-xl uppercase tracking-widest">
-                                <?php echo count($editors); ?> Membre(s)
-                            </span>
+                            <a href="?add=1" class="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-4 rounded-[1.5rem] font-black uppercase tracking-widest text-[10px] shadow-xl shadow-emerald-600/20 hover:-translate-y-1 transition-all flex items-center gap-3">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                                Nouveau Membre
+                            </a>
                         </div>
 
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-left min-w-[800px]">
+                        <div class="glass-panel rounded-[3rem] shadow-sm overflow-hidden overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
                                 <thead>
-                                    <tr class="bg-slate-50/50 dark:bg-slate-800/20 border-b border-indigo-50 dark:border-slate-800/50">
-                                        <th class="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Identité</th>
-                                        <th class="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Coordonnées</th>
-                                        <th class="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Accès</th>
-                                        <th class="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right pr-12">Gestion</th>
+                                    <tr class="bg-slate-50/50 dark:bg-slate-800/20 border-b border-slate-100 dark:border-slate-800/50">
+                                        <th class="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Collaborateur</th>
+                                        <th class="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest hidden md:table-cell">Contact & Accès</th>
+                                        <th class="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Statut</th>
+                                        <th class="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Actions</th>
                                     </tr>
                                 </thead>
-                                <tbody class="divide-y divide-indigo-50/30 dark:divide-slate-800/50">
-                                    <?php if (empty($editors)): ?>
-                                        <tr>
-                                            <td colspan="4" class="px-8 py-24 text-center">
-                                                <div class="flex flex-col items-center">
-                                                    <div class="w-20 h-20 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center text-slate-300 mb-6">
-                                                        <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A10.003 10.003 0 0012 20m0 0c1.398 0 2.735-.308 3.935-.856m1.545-2.903a10.011 10.011 0 001.202-2.59M12 10a2 2 0 100-4 2 2 0 000 4z"/></svg>
-                                                    </div>
-                                                    <p class="text-slate-400 font-bold font-outfit uppercase tracking-widest text-sm italic">Aucun membre enregistré.</p>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    <?php endif; ?>
+                                <tbody class="divide-y divide-slate-100 dark:divide-slate-800/50">
                                     <?php foreach ($editors as $ed): ?>
-                                        <tr class="hover:bg-indigo-50/30 dark:hover:bg-indigo-900/5 transition-all group">
-                                            <td class="px-8 py-8">
+                                        <tr class="hover:bg-emerald-50/10 dark:hover:bg-emerald-900/5 transition-all group">
+                                            <td class="px-8 py-6">
                                                 <div class="flex items-center gap-5">
-                                                    <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-white font-black text-xl shadow-lg shadow-indigo-500/20 transform group-hover:rotate-6 transition-transform">
-                                                        <?php echo strtoupper(substr($ed['full_name'], 0, 1)); ?>
+                                                    <div class="w-14 h-14 rounded-2xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400 font-black text-xl shadow-inner group-hover:scale-110 transition-transform duration-500">
+                                                        <?php echo substr($ed['full_name'], 0, 1); ?>
                                                     </div>
                                                     <div class="flex flex-col">
-                                                        <span class="font-extrabold text-[15px] text-slate-900 dark:text-white leading-tight mb-1"><?php echo htmlspecialchars($ed['full_name']); ?></span>
-                                                        <div class="flex items-center gap-2">
-                                                            <span class="px-2 py-0.5 bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 rounded text-[9px] font-black uppercase tracking-widest italic">Éditeur</span>
-                                                            <span class="text-[10px] text-slate-400 font-bold">@<?php echo htmlspecialchars($ed['username']); ?></span>
-                                                        </div>
+                                                        <span class="text-base font-black text-slate-900 dark:text-white group-hover:text-emerald-600 transition-colors"><?php echo htmlspecialchars($ed['full_name']); ?></span>
+                                                        <span class="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-0.5">Membre depuis <?php echo date('M Y', strtotime($ed['created_at'])); ?></span>
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td class="px-8 py-8">
-                                                <div class="flex flex-col gap-2">
-                                                    <div class="flex items-center gap-2 group/link">
-                                                        <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-                                                        <span class="text-xs font-bold text-slate-600 dark:text-slate-400"><?php echo htmlspecialchars($ed['email']); ?></span>
-                                                    </div>
+                                            <td class="px-8 py-6 hidden md:table-cell">
+                                                <div class="flex flex-col gap-1">
+                                                    <span class="text-xs font-bold text-slate-600 dark:text-slate-300"><?php echo htmlspecialchars($ed['email']); ?></span>
                                                     <div class="flex items-center gap-2">
-                                                        <svg class="w-3.5 h-3.5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
-                                                        <span class="text-[10px] font-black text-indigo-600/80 tracking-widest"><?php echo htmlspecialchars($ed['phone'] ?: 'No Phone'); ?></span>
+                                                        <span class="text-[10px] font-black text-emerald-600 lowercase bg-emerald-50 dark:bg-emerald-900/20 px-2 py-0.5 rounded-md">@<?php echo htmlspecialchars($ed['username']); ?></span>
+                                                        <span class="text-[10px] font-bold text-slate-400"><?php echo htmlspecialchars($ed['phone']); ?></span>
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td class="px-8 py-8 text-center">
-                                                <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 rounded-full text-[9px] font-black uppercase tracking-tighter">
-                                                    <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full"></span>
-                                                    Actif
-                                                </span>
+                                            <td class="px-8 py-6 text-center">
+                                                <a href="?toggle=<?php echo $hashids->encode($ed['id']); ?>" class="inline-flex items-center gap-2 px-4 py-2 rounded-full border transition-all <?php echo ($ed['status'] ?? 1) ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-500/20 text-emerald-600' : 'bg-rose-50 dark:bg-rose-900/10 border-rose-500/10 text-rose-500'; ?>">
+                                                    <div class="w-2 h-2 rounded-full <?php echo ($ed['status'] ?? 1) ? 'bg-emerald-500 shadow-lg shadow-emerald-500/50 animate-pulse' : 'bg-rose-500'; ?>"></div>
+                                                    <span class="text-[10px] font-black uppercase tracking-widest"><?php echo ($ed['status'] ?? 1) ? 'Actif' : 'Désactivé'; ?></span>
+                                                </a>
                                             </td>
-                                            <td class="px-8 py-8 text-right pr-12">
+                                            <td class="px-8 py-6 text-right whitespace-nowrap">
                                                 <div class="flex items-center justify-end gap-3 translate-x-4 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-300">
-                                                    <a href="?edit=<?php echo $ed['id']; ?>" class="w-11 h-11 rounded-2xl bg-blue-50 dark:bg-blue-900/20 text-blue-600 flex items-center justify-center hover:bg-blue-600 hover:text-white transition-all shadow-sm hover:shadow-blue-600/20 border border-blue-100 dark:border-blue-900/50" title="Éditer le profil">
-                                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                                    <a href="?edit=<?php echo $hashids->encode($ed['id']); ?>" class="w-11 h-11 bg-blue-50 dark:bg-blue-900/20 text-blue-600 rounded-2xl flex items-center justify-center hover:bg-blue-600 hover:text-white transition-all shadow-lg hover:shadow-blue-500/20 border border-blue-500/10" title="Modifier">
+                                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
                                                     </a>
-                                                    <button onclick="showConfirm('Attention ! Cette action est irréversible. Confirmer la suppression de ce membre ?', () => window.location.href='?delete=<?php echo $ed['id']; ?>')"
-                                                       class="w-11 h-11 rounded-2xl bg-rose-50 dark:bg-rose-900/20 text-rose-600 flex items-center justify-center hover:bg-rose-600 hover:text-white transition-all shadow-sm hover:shadow-rose-600/20 border border-rose-100 dark:border-rose-900/50" title="Résilier l'accès">
-                                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                                                    </button>
+                                                    <a href="?delete=<?php echo $hashids->encode($ed['id']); ?>" onclick="event.preventDefault(); showConfirm('Confirmer la suppression ?', () => window.location.href=this.href);" class="w-11 h-11 bg-rose-50 dark:bg-rose-900/20 text-rose-600 rounded-2xl flex items-center justify-center hover:bg-rose-600 hover:text-white transition-all shadow-lg hover:shadow-rose-500/20 border border-rose-500/10" title="Supprimer">
+                                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                                    </a>
                                                 </div>
                                             </td>
                                         </tr>
                                     <?php endforeach; ?>
+                                    <?php if (empty($editors)): ?>
+                                        <tr>
+                                            <td colspan="4" class="px-8 py-24 text-center text-slate-400 italic font-bold">Aucun membre enregistré dans l'équipe.</td>
+                                        </tr>
+                                    <?php endif; ?>
                                 </tbody>
                             </table>
                         </div>
                     </div>
                 </div>
-            </div>
+            <?php endif; ?>
         </div>
     </main>
 
     <script>
         function generatePassword() {
-            const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%&*";
+            const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";
             let password = "";
-            for (let i = 0; i < 14; i++) {
+            for (let i = 0; i < 12; i++) {
                 password += chars.charAt(Math.floor(Math.random() * chars.length));
             }
             const input = document.getElementById('password_input');
             input.value = password;
-            input.type = 'text'; // Make it visible
+            input.type = 'text';
+            input.select();
             
-            // Subtle flash effect to show it was generated
-            input.style.transition = 'none';
-            input.style.backgroundColor = 'rgba(79, 70, 229, 0.1)';
-            setTimeout(() => {
-                input.style.transition = 'all 0.3s ease';
-                input.style.backgroundColor = '';
-            }, 150);
+            showToast('Mot de passe généré avec succès', 'success');
         }
 
-        // Show toasts from PHP variables
         <?php if ($success): ?>
             showToast(<?php echo json_encode($success); ?>, 'success');
         <?php endif; ?>
-
         <?php if ($error): ?>
             showToast(<?php echo json_encode($error); ?>, 'error');
         <?php endif; ?>

@@ -32,61 +32,102 @@ $stmt = $pdo->prepare($sql);
 $stmt->execute($params);
 $projects = $stmt->fetchAll();
 
-// Récupérer les statistiques
-$stmt = $pdo->query("SELECT COUNT(*) as total, status FROM projects WHERE published = 1 GROUP BY status");
-$stats = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
+// Récupérer les statistiques réelles (incluant tous les statuts possibles)
+$all_statuses = ['En cours', 'Terminé', 'Planifié'];
+$stats = [];
+foreach ($all_statuses as $s) {
+    $stmt = $pdo->prepare("SELECT COUNT(*) FROM projects WHERE status = ? AND published = 1");
+    $stmt->execute([$s]);
+    $stats[$s] = $stmt->fetchColumn();
+}
+$total_projects = array_sum($stats);
 
 include 'includes/header.php';
 ?>
 
-<!-- Page Header -->
-<section class="bg-gradient-to-r from-[rgb(var(--color-primary))] to-[rgb(var(--color-primary-dark))] text-white py-20">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="text-center">
-            <h1 class="text-4xl md:text-5xl font-bold mb-4">Nos Projets</h1>
-            <p class="text-xl text-white/90 max-w-3xl mx-auto">
-                Des réalisations concrètes au service du développement durable et du bien-être de nos communautés
+<!-- Barre de Filtres : Version Mobile (Remplace le header) -->
+<section id="projects-filter-bar-mobile" class="lg:hidden bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 py-4 sticky top-0 z-[60] shadow-sm">
+    <div class="max-w-7xl mx-auto px-4">
+        <div class="flex items-center gap-4 overflow-x-auto no-scrollbar whitespace-nowrap">
+            <span class="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 flex-shrink-0">Filtrer :</span>
+            <div class="flex gap-2">
+                <a href="<?php echo $router->generate('projects_list'); ?>" class="px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all flex-shrink-0 <?php echo !$status ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-lg' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400'; ?>">Tous</a>
+                <a href="<?php echo $router->generate('projects_list'); ?>?status=En cours" class="px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all flex-shrink-0 <?php echo $status === 'En cours' ? 'bg-blue-600 text-white shadow-lg' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400'; ?>">En cours</a>
+                <a href="<?php echo $router->generate('projects_list'); ?>?status=Terminé" class="px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all flex-shrink-0 <?php echo $status === 'Terminé' ? 'bg-emerald-600 text-white shadow-lg' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400'; ?>">Terminés</a>
+                <a href="<?php echo $router->generate('projects_list'); ?>?status=Planifié" class="px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all flex-shrink-0 <?php echo $status === 'Planifié' ? 'bg-amber-600 text-white shadow-lg' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400'; ?>">Planifiés</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Page Header (Bureau & Mobile) -->
+<section class="bg-gradient-to-br from-slate-900 via-[rgb(var(--color-primary-dark))] to-[rgb(var(--color-primary))] text-white py-24 relative overflow-hidden">
+    <!-- Décorations SVG -->
+    <div class="absolute inset-0 opacity-10">
+        <svg class="absolute top-0 right-0 w-96 h-96 -mr-20 -mt-20" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" stroke="white" fill="none" stroke-width="0.5" stroke-dasharray="2 2"/></svg>
+        <svg class="absolute bottom-0 left-0 w-64 h-64 -ml-10 -mb-10 opacity-20" viewBox="0 0 100 100"><rect x="20" y="20" width="60" height="60" stroke="white" fill="none" stroke-width="0.5" transform="rotate(45 50 50)"/></svg>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div class="text-center mb-16">
+            <h1 class="text-5xl md:text-7xl font-black mb-6 uppercase tracking-tighter">Nos <span class="text-white/70">Projets</span></h1>
+            <p class="text-xl text-white/80 max-w-2xl mx-auto font-light leading-relaxed">
+                Des réalisations concrètes au service du développement durable et du bien-être de nos communautés au Sud-Kivu.
             </p>
         </div>
 
-        <!-- Stats -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-12">
-            <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6 text-center">
-                <div class="text-4xl font-bold mb-2"><?php echo array_sum($stats); ?></div>
-                <div class="text-white/90">Projets Totaux</div>
-            </div>
-            <?php foreach ($stats as $stat_name => $count): ?>
-            <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6 text-center">
-                <div class="text-4xl font-bold mb-2"><?php echo $count; ?></div>
-                <div class="text-white/90">Projets <?php echo htmlspecialchars($stat_name); ?></div>
-            </div>
-            <?php endforeach; ?>
+        <!-- Stats Premium -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+            <a href="<?php echo $router->generate('projects_list'); ?>" class="group bg-white/10 backdrop-blur-md border border-white/10 rounded-[2rem] p-6 text-center hover:bg-white/20 transition-all duration-500 <?php echo !$status ? 'ring-4 ring-white/30 bg-white/25' : ''; ?>">
+                <div class="text-4xl md:text-5xl font-black mb-1"><?php echo $total_projects; ?></div>
+                <div class="text-[10px] md:text-xs font-black uppercase tracking-[0.2em] text-white/70">Projets Totaux</div>
+            </a>
+            <a href="<?php echo $router->generate('projects_list'); ?>?status=En cours" class="group bg-blue-500/10 backdrop-blur-md border border-blue-400/20 rounded-[2rem] p-6 text-center hover:bg-blue-500/20 transition-all duration-500 <?php echo $status === 'En cours' ? 'ring-4 ring-blue-400/50 bg-blue-500/30' : ''; ?>">
+                <div class="text-4xl md:text-5xl font-black mb-1 text-blue-400"><?php echo $stats['En cours']; ?></div>
+                <div class="text-[10px] md:text-xs font-black uppercase tracking-[0.2em] text-blue-300/70">En cours</div>
+            </a>
+            <a href="<?php echo $router->generate('projects_list'); ?>?status=Terminé" class="group bg-emerald-500/10 backdrop-blur-md border border-emerald-400/20 rounded-[2rem] p-6 text-center hover:bg-emerald-500/20 transition-all duration-500 <?php echo $status === 'Terminé' ? 'ring-4 ring-emerald-400/50 bg-emerald-500/30' : ''; ?>">
+                <div class="text-4xl md:text-5xl font-black mb-1 text-emerald-400"><?php echo $stats['Terminé']; ?></div>
+                <div class="text-[10px] md:text-xs font-black uppercase tracking-[0.2em] text-emerald-300/70">Terminés</div>
+            </a>
+            <a href="<?php echo $router->generate('projects_list'); ?>?status=Planifié" class="group bg-amber-500/10 backdrop-blur-md border border-amber-400/20 rounded-[2rem] p-6 text-center hover:bg-amber-500/20 transition-all duration-500 <?php echo $status === 'Planifié' ? 'ring-4 ring-amber-400/50 bg-amber-500/30' : ''; ?>">
+                <div class="text-4xl md:text-5xl font-black mb-1 text-amber-400"><?php echo $stats['Planifié']; ?></div>
+                <div class="text-[10px] md:text-xs font-black uppercase tracking-[0.2em] text-amber-300/70">Planifiés</div>
+            </a>
         </div>
     </div>
 </section>
 
-<!-- Filtres -->
-<section class="bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-gray-700 py-6 sticky top-20 z-40 transition-colors">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex flex-col md:flex-row gap-4">
-            <div>
-                <label class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 block">Statut:</label>
-                <div class="flex flex-wrap gap-2">
-                    <a href="<?php echo $router->generate('projects_list'); ?><?php echo $category ? '?category=' . urlencode($category) : ''; ?>"
-                       class="px-4 py-2 rounded-full text-sm font-medium transition-colors <?php echo !$status ? 'bg-[rgb(var(--color-primary))] text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-slate-800 dark:text-gray-300 dark:hover:bg-slate-700'; ?>">
-                        Tous
-                    </a>
-                    <?php foreach (array_keys($stats) as $stat_name): ?>
-                    <a href="<?php echo $router->generate('projects_list'); ?>?status=<?php echo urlencode($stat_name); ?><?php echo $category ? '&category=' . urlencode($category) : ''; ?>"
-                       class="px-4 py-2 rounded-full text-sm font-medium transition-colors <?php echo $status === $stat_name ? 'bg-[rgb(var(--color-primary))] text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-slate-800 dark:text-gray-300 dark:hover:bg-slate-700'; ?>">
-                        <?php echo htmlspecialchars($stat_name); ?>
-                    </a>
-                    <?php endforeach; ?>
+<!-- Barre de Filtres : Version Bureau (Sous le header) -->
+<section class="hidden lg:block bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 py-6 sticky top-[80px] z-40 shadow-sm">
+    <div class="max-w-7xl mx-auto px-8">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center gap-6">
+                <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">Filtrer par :</span>
+                <div class="flex gap-2">
+                    <a href="<?php echo $router->generate('projects_list'); ?>" class="px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-widest bg-slate-900 text-white shadow-lg shadow-slate-900/20">Tous</a>
+                    <?php if($status): ?>
+                        <span class="px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-widest bg-emerald-600 text-white shadow-lg flex items-center gap-2">
+                            Statut: <?php echo htmlspecialchars($status); ?>
+                            <a href="<?php echo $router->generate('projects_list'); ?>">✕</a>
+                        </span>
+                    <?php endif; ?>
                 </div>
             </div>
+            <div class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]"><?php echo count($projects); ?> Projet(s)</div>
         </div>
     </div>
 </section>
+
+<style>
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+    @media (max-width: 1023px) {
+        nav.sticky { display: none !important; }
+        body { padding-top: 0 !important; }
+    }
+</style>
 
 <!-- Liste des projets -->
 <section class="py-16 bg-gray-50 dark:bg-slate-950 transition-colors">
@@ -122,7 +163,7 @@ include 'includes/header.php';
                         </div>
                     </div>
                 <?php else: ?>
-                    <a href="<?php echo getUrl('projects', $project['id'], $project['slug']); ?>" class="block aspect-video bg-gray-200 overflow-hidden relative">
+                    <a href="<?php echo getUrl('projects', $project['id'], $project['slug'], $project['nanoid'] ?? null); ?>" class="block aspect-video bg-gray-200 overflow-hidden relative">
                         <?php
                         $project_image = $project['image'] ? SITE_URL . '/uploads/' . $project['image'] : null;
                         if (!$project_image) {
@@ -166,7 +207,7 @@ include 'includes/header.php';
                     <?php endif; ?>
 
                     <h3 class="text-xl font-bold text-gray-800 dark:text-white mb-3 group-hover:text-[rgb(var(--color-primary))] transition-colors">
-                        <a href="<?php echo getUrl('projects', $project['id'], $project['slug']); ?>">
+                        <a href="<?php echo getUrl('projects', $project['id'], $project['slug'], $project['nanoid'] ?? null); ?>">
                             <?php echo htmlspecialchars($project['title']); ?>
                         </a>
                     </h3>
@@ -195,7 +236,7 @@ include 'includes/header.php';
                         <?php endif; ?>
                     </div>
 
-                    <a href="<?php echo getUrl('projects', $project['id'], $project['slug']); ?>"
+                    <a href="<?php echo getUrl('projects', $project['id'], $project['slug'], $project['nanoid'] ?? null); ?>"
                        class="inline-flex items-center text-[rgb(var(--color-primary))] font-semibold hover:gap-2 transition-all">
                         Voir le projet
                         <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">

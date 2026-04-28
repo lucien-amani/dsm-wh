@@ -1,6 +1,8 @@
 <?php
 header('Content-Type: application/json');
-require_once '../vendor/autoload.php';
+require_once '../config/database.php';
+require_once '../config/router.php';
+require_once '../config/helpers.php';
 require_once '../config/database.php';
 require_once '../config/mail.php';
 require_once '../config/helpers.php';

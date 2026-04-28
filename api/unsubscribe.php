@@ -1,5 +1,7 @@
 <?php
-require_once '../vendor/autoload.php';
+require_once '../config/database.php';
+require_once '../config/router.php';
+require_once '../config/helpers.php';
 require_once '../config/database.php';
 require_once '../config/helpers.php';
 
@@ -63,12 +65,12 @@ if (isset($_GET['email'])) {
             <?php echo $message ?: $error; ?>
         </p>
         
-        <a href="/dsm/" class="inline-block px-8 py-4 bg-slate-900 text-white rounded-2xl font-bold uppercase tracking-widest text-xs hover:bg-slate-800 transition-all shadow-lg active:scale-95">
+        <a href="<?php echo SITE_URL; ?>" class="inline-block px-8 py-4 bg-slate-900 text-white rounded-2xl font-bold uppercase tracking-widest text-xs hover:bg-slate-800 transition-all shadow-lg active:scale-95">
             Retour à l'accueil
         </a>
     </div>
 
-    <script src="/dsm/assets/js/main.js"></script>
+    <script src="<?php echo SITE_URL; ?>/assets/js/main.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             <?php if ($message): ?>

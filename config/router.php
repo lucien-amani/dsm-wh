@@ -1,23 +1,17 @@
 <?php
-use Hashids\Hashids;
+require_once __DIR__ . '/no-composer-lib.php';
 
-// Initialiser AltoRouter
-$router = new AltoRouter();
+// Initialiser le Router
+$router = new SimpleRouter();
 
-// Définir le chemin de base (sous-dossier actuel)
-// Si votre site est à la racine, laissez vide ou '/'. 
-// Ici on détecte dynamiquement "/dsm"
+// Définir le chemin de base
 $basePath = parse_url(SITE_URL, PHP_URL_PATH);
 $router->setBasePath($basePath);
 
-// Initialiser Hashids
-// SALT : Changez cette chaîne pour rendre vos IDs uniques à votre projet
-// MIN_LENGTH : 8 caractères minimum pour l'ID chiffré
-// ALPHABET : Caractères utilisés (pas de confusion comme 0/O, 1/l)
-$hashids = new Hashids(
+$hashids = new SimpleHashids(
     'DSM_SECURE_K3y_9z7x4v2b1n6m8QW3R5T7Y9U2I4O6P8A0S2D4F6G8H0J2K4L6Z8X0C2V4B6N8M', 
     8, 
-    'abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+    'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_'
 );
 
 // --------------------------------------------------------------
@@ -47,33 +41,43 @@ $router->map('GET', '/projets', 'projects', 'projects_list');
 // Structure : /view/[table]/[hash_id]/[slug]
 // Ex: /view/news/XYZ123/titre-de-l-article
 $router->map('GET', '/view/[a:table]/[a:hash]/[*:slug]?', function($table, $hash, $slug = null) use ($hashids) {
-    
-    // Tentative de décodage de l'ID
-    $ids = $hashids->decode($hash);
-    
-    if (empty($ids)) {
-        return false; // ID invalide -> 404
-    }
-    
-    $id = $ids[0];
-    
-    // Mapping des tables vers les fichiers de vue
-    // Permet de sécuriser et de rediriger vers le bon fichier template
+
+    // Mapping des tables autorisées vers les fichiers de vue
     $routesMap = [
-        'news' => 'pages/news/detail.php',
+        'news'     => 'pages/news/detail.php',
         'projects' => 'pages/projects/detail.php',
-        // Ajoutez d'autres tables ici au besoin
     ];
 
     if (!array_key_exists($table, $routesMap)) {
-        return false; // Table non autorisée -> 404
+        return false; // Table non autorisée → 404
     }
 
-    // Retourne le fichier à inclure et l'ID décodé
-    return [
-        'target' => $routesMap[$table],
-        'id' => $id,
-        'original_slug' => $slug
-    ];
+    // --- Résolution de l'ID ---
+    // 1. Essayer en premier : lookup nanoid en BDD (nouveau système)
+    try {
+        $pdo  = getDBConnection();
+        $stmt = $pdo->prepare("SELECT id FROM `{$table}` WHERE nanoid = ? LIMIT 1");
+        $stmt->execute([$hash]);
+        $row  = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($row) {
+            return [
+                'target'        => $routesMap[$table],
+                'id'            => (int)$row['id'],
+                'original_slug' => $slug
+            ];
+        }
+    } catch (Exception $e) { /* BDD non dispo : on tente le fallback */ }
+
+    // 2. Fallback : décodage hashids (rétrocompatibilité avec les anciennes URLs)
+    $ids = $hashids->decode($hash);
+    if (!empty($ids)) {
+        return [
+            'target'        => $routesMap[$table],
+            'id'            => $ids[0],
+            'original_slug' => $slug
+        ];
+    }
+
+    return false; // Aucune correspondance → 404
 
 }, 'dynamic_route');

@@ -65,6 +65,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Connexion — DSM Admin</title>
+    <link rel="icon" type="image/png" href="<?php echo SITE_URL; ?>/assets/logo/logo-dsm.jpg">
     <meta name="description" content="Accédez à l'espace d'administration sécurisé de la plateforme DSM.">
 
     <!-- Google Fonts -->
@@ -79,20 +80,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
         :root {
-            --accent:      #3aed58ff;
-            --accent-mid:  #5cf67dff;
-            --accent-glow: rgba(58, 237, 88, 0.35);
-            --accent-soft: rgba(73, 237, 58, 0.12);
+            --accent:      #10b981; /* Emerald-500 */
+            --accent-mid:  #34d399; /* Emerald-400 */
+            --accent-glow: rgba(16, 185, 129, 0.35);
+            --accent-soft: rgba(16, 185, 129, 0.12);
             --gold:        #F59E0B;
 
-            --bg-left:     #0F0A1E;
+            --bg-left:     #064e3b; /* Emerald-900 (Darker for depth) */
             --bg-right:    #ffffff;
 
-            --text-on-dark:   #E2D9F3;
-            --text-muted:     rgba(226,217,243,0.55);
+            --text-on-dark:   #ecfdf5;
+            --text-muted:     rgba(209, 250, 229, 0.6);
 
             --input-border:   #E5E7EB;
-            --input-focus:    #3aed70ff;
+            --input-focus:    #10b981;
             --text-field:     #1F2937;
 
             --radius-card:  24px;
@@ -136,8 +137,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             position: absolute;
             inset: 0;
             background-image:
-                linear-gradient(rgba(124,58,237,0.07) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(124,58,237,0.07) 1px, transparent 1px);
+                linear-gradient(rgba(16,185,129,0.07) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(16,185,129,0.07) 1px, transparent 1px);
             background-size: 48px 48px;
             pointer-events: none;
         }
@@ -147,7 +148,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             content: '';
             position: absolute;
             inset: 0;
-            background: radial-gradient(ellipse at center, transparent 40%, rgba(15,10,30,0.75) 100%);
+            background: radial-gradient(ellipse at center, transparent 40%, rgba(6,78,59,0.75) 100%);
             pointer-events: none;
         }
 
@@ -169,13 +170,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         .orb-1 {
             width: 320px; height: 320px;
-            background: radial-gradient(circle, #7C3AED 0%, #4F46E5 60%, transparent 100%);
+            background: radial-gradient(circle, #10b981 0%, #059669 60%, transparent 100%);
             top: -60px; left: -80px;
             animation: orbFloat 8s ease-in-out infinite;
         }
         .orb-2 {
             width: 260px; height: 260px;
-            background: radial-gradient(circle, #EC4899 0%, #8B5CF6 60%, transparent 100%);
+            background: radial-gradient(circle, #34d399 0%, #047857 60%, transparent 100%);
             bottom: -40px; right: -60px;
             animation: orbFloat 10s ease-in-out infinite reverse;
         }
@@ -211,10 +212,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         .brand-logo {
             width: 48px; height: 48px;
-            background: linear-gradient(135deg, #7C3AED, #4F46E5);
+            background: linear-gradient(135deg, #059669, #10b981);
             border-radius: 14px;
             display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 0 24px rgba(124,58,237,0.6);
+            box-shadow: 0 0 24px rgba(16,185,129,0.6);
             animation: logoPulse 3s ease-in-out infinite;
         }
         @keyframes logoPulse {
@@ -241,7 +242,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             margin-bottom: 16px;
         }
         .tagline .gradient-text {
-            background: linear-gradient(135deg, #A78BFA, #60A5FA, #F472B6);
+            background: linear-gradient(135deg, #34d399, #10b981, #6ee7b7);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -281,11 +282,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         .feature-icon {
             width: 36px; height: 36px; min-width: 36px;
             border-radius: 10px;
-            background: rgba(124,58,237,0.15);
-            border: 1px solid rgba(124,58,237,0.3);
+            background: rgba(16,185,129,0.15);
+            border: 1px solid rgba(16,185,129,0.3);
             display: flex; align-items: center; justify-content: center;
         }
-        .feature-icon svg { width: 16px; height: 16px; color: #A78BFA; }
+        .feature-icon svg { width: 16px; height: 16px; color: #34d399; }
 
         .feature-text {
             font-size: 0.83rem;
@@ -322,7 +323,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             content: '';
             position: absolute;
             width: 600px; height: 600px;
-            background: radial-gradient(circle, rgba(124,58,237,0.06) 0%, transparent 70%);
+            background: radial-gradient(circle, rgba(16,185,129,0.06) 0%, transparent 70%);
             top: -200px; right: -200px;
             pointer-events: none;
         }
@@ -330,7 +331,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             content: '';
             position: absolute;
             width: 400px; height: 400px;
-            background: radial-gradient(circle, rgba(99,102,241,0.05) 0%, transparent 70%);
+            background: radial-gradient(circle, rgba(52,211,153,0.05) 0%, transparent 70%);
             bottom: -100px; left: -100px;
             pointer-events: none;
         }
@@ -537,7 +538,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         .btn-login {
             width: 100%;
             padding: 15px 24px;
-            background: linear-gradient(135deg, #7C3AED, #4F46E5);
+            background: linear-gradient(135deg, #059669, #10b981);
             color: #fff;
             font-family: 'Plus Jakarta Sans', sans-serif;
             font-size: 0.9rem;
@@ -547,7 +548,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             border-radius: var(--radius-btn);
             cursor: pointer;
             display: flex; align-items: center; justify-content: center; gap: 8px;
-            box-shadow: 0 4px 20px rgba(124,58,237,0.4);
+            box-shadow: 0 4px 20px rgba(16,185,129,0.4);
             transition: transform var(--transition), box-shadow var(--transition), filter var(--transition);
             position: relative;
             overflow: hidden;
@@ -954,7 +955,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     const ctx    = canvas.getContext('2d');
     let particles = [];
     const PARTICLE_COUNT = 55;
-    const COLORS = ['rgba(167,139,250,', 'rgba(99,102,241,', 'rgba(236,72,153,', 'rgba(96,165,250,'];
+    const COLORS = ['rgba(16,185,129,', 'rgba(52,211,153,', 'rgba(110,231,183,', 'rgba(5,150,105,'];
 
     function resize() {
         canvas.width  = panel.offsetWidth;
@@ -987,7 +988,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if (dist < maxDist) {
                     const alpha = (1 - dist / maxDist) * 0.15;
                     ctx.beginPath();
-                    ctx.strokeStyle = `rgba(167,139,250,${alpha})`;
+                    ctx.strokeStyle = `rgba(16,185,129,${alpha})`;
                     ctx.lineWidth = 0.8;
                     ctx.moveTo(particles[i].x, particles[i].y);
                     ctx.lineTo(particles[j].x, particles[j].y);
@@ -1054,7 +1055,7 @@ pwInput.addEventListener('input', () => {
     if (/[^A-Za-z0-9]/.test(val)) score++;
 
     const pct    = (score / 5) * 100;
-    const colors = ['#EF4444','#F97316','#EAB308','#22C55E','#7C3AED'];
+    const colors = ['#EF4444','#F97316','#EAB308','#10b981','#059669'];
     const color  = score > 0 ? colors[Math.min(score - 1, 4)] : '#EF4444';
 
     pwStrengthFill.style.width      = pct + '%';
@@ -1088,7 +1089,7 @@ document.querySelectorAll('.field-input').forEach(input => {
     const wrap = input.closest('.field-wrap');
     const icon = wrap?.querySelector('.field-icon-left svg');
     if (!icon) return;
-    input.addEventListener('focus',  () => icon.style.color = '#7C3AED');
+    input.addEventListener('focus',  () => icon.style.color = '#10b981');
     input.addEventListener('blur',   () => icon.style.color = '');
 });
 </script>

@@ -1,0 +1,192 @@
+[
+    {
+        "id": 1,
+        "user_id": 2,
+        "action": "deconnexion",
+        "ip_address": "::1",
+        "created_at": "2026-03-05 08:39:46",
+        "full_name": "Lucien Amani",
+        "role": "Superadmin",
+        "email": "luciusamani@gmail.com"
+    },
+    {
+        "id": 2,
+        "user_id": 3,
+        "action": "connexion",
+        "ip_address": "::1",
+        "created_at": "2026-03-05 08:40:02",
+        "full_name": "Promesse BIBENTYO",
+        "role": "Editor",
+        "email": "promessebibentyo80@gmail.com"
+    },
+    {
+        "id": 3,
+        "user_id": 3,
+        "action": "deconnexion",
+        "ip_address": "::1",
+        "created_at": "2026-03-05 08:40:09",
+        "full_name": "Promesse BIBENTYO",
+        "role": "Editor",
+        "email": "promessebibentyo80@gmail.com"
+    },
+    {
+        "id": 4,
+        "user_id": 2,
+        "action": "connexion",
+        "ip_address": "::1",
+        "created_at": "2026-03-05 08:40:22",
+        "full_name": "Lucien Amani",
+        "role": "Superadmin",
+        "email": "luciusamani@gmail.com"
+    },
+    {
+        "id": 5,
+        "user_id": 3,
+        "action": "connexion",
+        "ip_address": "41.243.3.158",
+        "created_at": "2026-03-05 08:58:22",
+        "full_name": "Promesse BIBENTYO",
+        "role": "Editor",
+        "email": "promessebibentyo80@gmail.com"
+    },
+    {
+        "id": 6,
+        "user_id": 3,
+        "action": "connexion",
+        "ip_address": "2605:59c0:9c9:1508:887:62c4:7edd:939a",
+        "created_at": "2026-03-05 11:58:25",
+        "full_name": "Promesse BIBENTYO",
+        "role": "Editor",
+        "email": "promessebibentyo80@gmail.com"
+    },
+    {
+        "id": 7,
+        "user_id": 2,
+        "action": "connexion",
+        "ip_address": "::1",
+        "created_at": "2026-03-07 09:05:44",
+        "full_name": "Lucien Amani",
+        "role": "Superadmin",
+        "email": "luciusamani@gmail.com"
+    },
+    {
+        "id": 8,
+        "user_id": 2,
+        "action": "suppression article : Actualité X (Twitter) du 02\/",
+        "ip_address": "::1",
+        "created_at": "2026-03-07 09:06:35",
+        "full_name": "Lucien Amani",
+        "role": "Superadmin",
+        "email": "luciusamani@gmail.com"
+    },
+    {
+        "id": 9,
+        "user_id": 2,
+        "action": "suppression article : Actualité de la Dynamique Sa",
+        "ip_address": "::1",
+        "created_at": "2026-03-07 09:06:40",
+        "full_name": "Lucien Amani",
+        "role": "Superadmin",
+        "email": "luciusamani@gmail.com"
+    },
+    {
+        "id": 10,
+        "user_id": 2,
+        "action": "suppression article : Lorem10",
+        "ip_address": "::1",
+        "created_at": "2026-03-07 09:06:46",
+        "full_name": "Lucien Amani",
+        "role": "Superadmin",
+        "email": "luciusamani@gmail.com"
+    },
+    {
+        "id": 11,
+        "user_id": 2,
+        "action": "suppression article : Actualité Média du 24\/02\/202",
+        "ip_address": "::1",
+        "created_at": "2026-03-07 09:06:50",
+        "full_name": "Lucien Amani",
+        "role": "Superadmin",
+        "email": "luciusamani@gmail.com"
+    },
+    {
+        "id": 12,
+        "user_id": 2,
+        "action": "suppression article : Test sur X",
+        "ip_address": "::1",
+        "created_at": "2026-03-07 09:06:56",
+        "full_name": "Lucien Amani",
+        "role": "Superadmin",
+        "email": "luciusamani@gmail.com"
+    },
+    {
+        "id": 13,
+        "user_id": 2,
+        "action": "suppression article : Actualité Média du 24\/02\/202",
+        "ip_address": "::1",
+        "created_at": "2026-03-07 09:07:02",
+        "full_name": "Lucien Amani",
+        "role": "Superadmin",
+        "email": "luciusamani@gmail.com"
+    },
+    {
+        "id": 14,
+        "user_id": 2,
+        "action": "suppression article : Élu en 2023 : Un engagement ",
+        "ip_address": "::1",
+        "created_at": "2026-03-07 09:07:08",
+        "full_name": "Lucien Amani",
+        "role": "Superadmin",
+        "email": "luciusamani@gmail.com"
+    },
+    {
+        "id": 15,
+        "user_id": 2,
+        "action": "suppression article : Expertise en Énergies Renouv",
+        "ip_address": "::1",
+        "created_at": "2026-03-07 09:07:13",
+        "full_name": "Lucien Amani",
+        "role": "Superadmin",
+        "email": "luciusamani@gmail.com"
+    },
+    {
+        "id": 16,
+        "user_id": 2,
+        "action": "suppression article : Actions Humanitaires : Au Se",
+        "ip_address": "::1",
+        "created_at": "2026-03-07 09:07:17",
+        "full_name": "Lucien Amani",
+        "role": "Superadmin",
+        "email": "luciusamani@gmail.com"
+    },
+    {
+        "id": 17,
+        "user_id": 2,
+        "action": "suppression projet : Centrale Hydroélectrique de L",
+        "ip_address": "::1",
+        "created_at": "2026-03-07 09:07:42",
+        "full_name": "Lucien Amani",
+        "role": "Superadmin",
+        "email": "luciusamani@gmail.com"
+    },
+    {
+        "id": 18,
+        "user_id": 2,
+        "action": "suppression projet : Forages d'Eau Potable au Sud-",
+        "ip_address": "::1",
+        "created_at": "2026-03-07 09:07:47",
+        "full_name": "Lucien Amani",
+        "role": "Superadmin",
+        "email": "luciusamani@gmail.com"
+    },
+    {
+        "id": 19,
+        "user_id": 2,
+        "action": "suppression projet : Installation Solaire pour Éco",
+        "ip_address": "::1",
+        "created_at": "2026-03-07 09:07:52",
+        "full_name": "Lucien Amani",
+        "role": "Superadmin",
+        "email": "luciusamani@gmail.com"
+    }
+]

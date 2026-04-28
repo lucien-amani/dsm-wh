@@ -137,14 +137,14 @@ include 'includes/header.php';
                     
                     <div class="space-y-6">
                         <?php if ($project['location']): ?>
-                        <div>
-                            <div class="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                        <div class="group/loc cursor-pointer" onclick="document.getElementById('project-map').scrollIntoView({behavior: 'smooth', block: 'center'});">
+                            <div class="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 group-hover/loc:text-[rgb(var(--color-primary))] transition-colors">
                                 <svg class="w-5 h-5 text-[rgb(var(--color-primary))]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
                                 </svg>
                                 Localisation
                             </div>
-                            <p class="text-gray-600 dark:text-gray-400 pl-7"><?php echo htmlspecialchars($project['location']); ?></p>
+                            <p class="text-gray-600 dark:text-gray-400 pl-7 group-hover/loc:underline transition-all"><?php echo htmlspecialchars($project['location']); ?></p>
                         </div>
                         <?php endif; ?>
 
@@ -207,7 +207,7 @@ include 'includes/header.php';
                         <?php endif; ?>
                     </div>
 
-                    <!-- Share -->
+    <!-- Share -->
                     <div class="mt-8 pt-8 border-t border-gray-200 dark:border-gray-700">
                         <h4 class="text-sm font-bold text-gray-700 dark:text-gray-300 mb-4">Partager ce projet</h4>
                         <div class="flex gap-2">
@@ -228,11 +228,27 @@ include 'includes/header.php';
                             </button>
                         </div>
                     </div>
+
+                    <!-- Map Widget -->
+                    <?php if ($project['location']): ?>
+                    <div class="mt-8 pt-8 border-t border-gray-200 dark:border-gray-700">
+                        <h4 class="text-sm font-bold text-gray-700 dark:text-gray-300 mb-4">Localisation du projet</h4>
+                        <div id="project-map" class="h-48 w-full rounded-xl shadow-inner bg-gray-100 dark:bg-slate-700 border border-gray-200 dark:border-slate-600"></div>
+                        <p class="text-[10px] text-gray-400 mt-2 italic flex items-center gap-1">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            Basé sur la ville de <?php echo htmlspecialchars($project['location']); ?>
+                        </p>
+                    </div>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
     </div>
 </section>
+
+<!-- Leaflet CSS & JS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
 <!-- Related Projects -->
 <?php if (!empty($related_projects)): ?>
@@ -242,7 +258,7 @@ include 'includes/header.php';
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
             <?php foreach ($related_projects as $related): ?>
             <article class="card group">
-                <a href="<?php echo getUrl('projects', $related['id'], $related['slug']); ?>" 
+                <a href="<?php echo getUrl('projects', $related['id'], $related['slug'], $related['nanoid'] ?? null); ?>" 
                    class="block aspect-video bg-gray-200 overflow-hidden relative">
                     <?php if ($related['image']): ?>
                         <img src="<?php echo SITE_URL . '/uploads/' . $related['image']; ?>" 
@@ -294,6 +310,39 @@ function shareOnWhatsApp() {
     const text = encodeURIComponent(document.querySelector('h1').textContent);
     window.open(`https://wa.me/?text=${text} ${url}`, '_blank');
 }
+
+// Map Initialization
+document.addEventListener('DOMContentLoaded', function() {
+    const locationName = "<?php echo addslashes($project['location']); ?>";
+    if (!locationName) return;
+
+    // Default coordinates (Bukavu, RDC) if geocoding fails
+    const defaultLat = -2.5000;
+    const defaultLng = 28.8667;
+
+    const map = L.map('project-map').setView([defaultLat, defaultLng], 12);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+
+    const marker = L.marker([defaultLat, defaultLng]).addTo(map)
+        .bindPopup(`<b>${locationName}</b><br>Zone d'intervention du projet.`)
+        .openPopup();
+
+    // Geocoding attempt with Nominatim (Free, no key required for low usage)
+    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(locationName + ', RDC')}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data && data.length > 0) {
+                const lat = parseFloat(data[0].lat);
+                const lon = parseFloat(data[0].lon);
+                map.setView([lat, lon], 13);
+                marker.setLatLng([lat, lon]);
+            }
+        })
+        .catch(err => console.warn("Geocoding error:", err));
+});
 </script>
 
 <?php include 'includes/footer.php'; ?>

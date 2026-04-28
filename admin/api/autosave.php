@@ -93,12 +93,21 @@ try {
                 } else { break; }
             }
 
+            // Générer un NanoID unique
+            $chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+            do {
+                $nanoid = '';
+                for ($__i = 0; $__i < 10; $__i++) { $nanoid .= $chars[random_int(0, 61)]; }
+                $chk = $pdo->prepare("SELECT 1 FROM $table WHERE nanoid = ?");
+                $chk->execute([$nanoid]);
+            } while ($chk->fetch());
+
             if ($type === 'news') {
-                $stmt = $pdo->prepare("INSERT INTO news (title, slug, excerpt, content, category, embed_code, published, author_id) VALUES (:title, :slug, :excerpt, :content, :cat, :embed, 0, :author)");
-                $stmt->execute([':title' => $title, ':slug' => $slug, ':excerpt' => $excerpt, ':content' => $content, ':cat' => $category, ':embed' => $embed_code, ':author' => $author_id]);
+                $stmt = $pdo->prepare("INSERT INTO news (nanoid, title, slug, excerpt, content, category, embed_code, published, author_id) VALUES (:nano, :title, :slug, :excerpt, :content, :cat, :embed, 0, :author)");
+                $stmt->execute([':nano' => $nanoid, ':title' => $title, ':slug' => $slug, ':excerpt' => $excerpt, ':content' => $content, ':cat' => $category, ':embed' => $embed_code, ':author' => $author_id]);
             } else {
-                $stmt = $pdo->prepare("INSERT INTO projects (title, slug, description, content, location, status, beneficiaries, published, author_id) VALUES (:title, :slug, :desc, :content, :loc, :status, :ben, 0, :author)");
-                $stmt->execute([':title' => $title, ':slug' => $slug, ':desc' => $description, ':content' => $content, ':loc' => $location, ':status' => $status, ':ben' => $beneficiaries, ':author' => $author_id]);
+                $stmt = $pdo->prepare("INSERT INTO projects (nanoid, title, slug, description, content, location, status, beneficiaries, published, author_id) VALUES (:nano, :title, :slug, :desc, :content, :loc, :status, :ben, 0, :author)");
+                $stmt->execute([':nano' => $nanoid, ':title' => $title, ':slug' => $slug, ':desc' => $description, ':content' => $content, ':loc' => $location, ':status' => $status, ':ben' => $beneficiaries, ':author' => $author_id]);
             }
             $new_id = $pdo->lastInsertId();
         }

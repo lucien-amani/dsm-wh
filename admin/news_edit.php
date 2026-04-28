@@ -124,9 +124,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     header('Location: ' . SITE_URL . '/admin/actualites?msg=updated');
                     exit;
                 } else {
-                    $stmt = $pdo->prepare("INSERT INTO news (title, slug, category, excerpt, content, embed_code, image, published, author_id) VALUES (:title, :slug, :category, :excerpt, :content, :embed_code, :image, :published, :author_id)");
+                    // Générer un NanoID unique pour cette actualité
+                    $chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+                    do {
+                        $nanoid = '';
+                        for ($__i = 0; $__i < 10; $__i++) { $nanoid .= $chars[random_int(0, 61)]; }
+                        $chk = $pdo->prepare("SELECT 1 FROM news WHERE nanoid = ?");
+                        $chk->execute([$nanoid]);
+                    } while ($chk->fetch());
+
+                    $stmt = $pdo->prepare("INSERT INTO news (nanoid, title, slug, category, excerpt, content, embed_code, image, published, author_id) VALUES (:nanoid, :title, :slug, :category, :excerpt, :content, :embed_code, :image, :published, :author_id)");
                     $stmt->execute([
-                        ':title' => $title, ':slug' => $slug, ':category' => $category, ':excerpt' => $excerpt,
+                        ':nanoid' => $nanoid, ':title' => $title, ':slug' => $slug, ':category' => $category, ':excerpt' => $excerpt,
                         ':content' => $content, ':embed_code' => $embed_code, ':image' => $image_name, ':published' => $published,
                         ':author_id' => $_SESSION['admin_id']
                     ]);
@@ -150,6 +159,7 @@ $current_page = 'news';
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo $id ? 'Modifier' : 'Rédiger'; ?> - DSM ADMIN</title>
+    <link rel="icon" type="image/png" href="<?php echo SITE_URL; ?>/assets/logo/logo-dsm.jpg">
     <link rel="stylesheet" href="<?php echo SITE_URL; ?>/dist/output.css">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://cdn.tiny.cloud/1/dc2957p0surukua107br2308kw9cdrkzh90lbze1gvfyn0lj/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
@@ -238,10 +248,19 @@ $current_page = 'news';
                     <div class="bg-white dark:bg-slate-900 p-8 rounded-[3rem] shadow-sm border border-slate-200 dark:border-slate-800 space-y-6 <?php echo $is_social_post ? 'hidden' : ''; ?>">
                         <label class="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] ml-2">Image de couverture</label>
                         <div class="group relative aspect-video bg-slate-50 dark:bg-slate-800 rounded-3xl overflow-hidden border-2 border-dashed border-slate-200 dark:border-slate-700 flex flex-col items-center justify-center text-center p-4">
-                            <?php if($news && $news['image']): ?>
+                            <?php 
+                            $image_exists = ($news && $news['image'] && file_exists('../uploads/' . $news['image']));
+                            if($news && $news['image'] && $image_exists): 
+                            ?>
                                 <img src="<?php echo SITE_URL; ?>/uploads/<?php echo $news['image']; ?>" id="preview-img" class="absolute inset-0 w-full h-full object-cover">
                             <?php else: ?>
-                                <img id="preview-img" class="absolute inset-0 w-full h-full object-cover hidden">
+                                <img id="preview-img" class="absolute inset-0 w-full h-full object-cover hidden" src="">
+                                <?php if($news && $news['image'] && !$image_exists): ?>
+                                    <!-- Debug: File <?php echo $news['image']; ?> not found in ../uploads/ -->
+                                    <div class="absolute inset-0 flex items-center justify-center bg-rose-500/10 text-rose-500 p-4">
+                                        <div class="text-[10px] font-black uppercase">Fichier introuvable</div>
+                                    </div>
+                                <?php endif; ?>
                             <?php endif; ?>
                             
                             <div class="relative z-10 opacity-0 group-hover:opacity-100 transition-opacity bg-black/40 inset-0 absolute flex items-center justify-center">
@@ -364,7 +383,7 @@ $current_page = 'news';
             formData.append('data[category]', category);
             formData.append('data[embed_code]', embed_code);
             
-            fetch('api/autosave.php', {
+            fetch('<?php echo SITE_URL; ?>/admin/api/autosave.php', {
                 method: 'POST',
                 body: formData
             })

@@ -4,11 +4,12 @@
  */
 
 // Paramètres statiques
-define('MAIL_HOST', 'smtp.gmail.com');
-define('MAIL_PORT', 587); 
-define('MAIL_USER', 'dsamymagadju@gmail.com');
-define('MAIL_PASS', 'dyva zbhq skzb plxd');
-define('MAIL_FROM_EMAIL', 'dsamymagadju@gmail.com');
+// Paramètres SMTP (Chargés depuis .env)
+define('MAIL_HOST', $_ENV['MAIL_HOST'] ?? 'smtp.gmail.com');
+define('MAIL_PORT', $_ENV['MAIL_PORT'] ?? 587); 
+define('MAIL_USER', $_ENV['MAIL_USER'] ?? 'dsamymagadju@gmail.com');
+define('MAIL_PASS', $_ENV['MAIL_PASS'] ?? 'dyva zbhq skzb plxd');
+define('MAIL_FROM_EMAIL', $_ENV['MAIL_FROM_EMAIL'] ?? 'dsamymagadju@gmail.com');
 define('MAIL_AUTH', true);
 define('MAIL_ENCRYPTION', 'tls');
 

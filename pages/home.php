@@ -52,7 +52,35 @@ include 'includes/header.php';
                     </a>
                 </div>
             </div>
-            
+            <div class="relative flex justify-center lg:justify-end animate-fade-in" style="animation-delay: 200ms;">
+                <div class="relative group">
+                    <!-- Décoration arrière -->
+                    <div class="absolute -inset-4 bg-gradient-to-tr from-[rgb(var(--color-primary))] to-red-500 rounded-[2rem] blur-2xl opacity-20 group-hover:opacity-40 transition-opacity duration-500"></div>
+                    
+                    <!-- Conteneur Image (Square to match About page) -->
+                    <div class="relative w-full max-w-[500px] aspect-square rounded-2xl overflow-hidden border-4 border-white/10 shadow-2xl">
+                        <img src="<?php echo SITE_URL; ?>/uploads/profil.jpg" 
+                             alt="Ir. Samy Magadju" 
+                             class="w-full h-full object-cover transition-all duration-700 scale-105 group-hover:scale-100">
+                        
+                        <!-- Overlay dégradé -->
+                        <div class="absolute inset-0 bg-gradient-to-t from-gray-900/60 via-transparent to-transparent"></div>
+                    </div>
+                    
+                    <!-- Badge flottant -->
+                    <div class="absolute -bottom-6 -left-6 bg-white dark:bg-slate-900 p-4 rounded-2xl shadow-xl border border-gray-100 dark:border-white/5 hidden md:block">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-[rgb(var(--color-primary))] rounded-full flex items-center justify-center text-white">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-500 uppercase tracking-widest font-bold">Élu en 2023</p>
+                                <p class="text-sm font-black text-gray-900 dark:text-white">Conseiller Municipal</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </section>
@@ -89,7 +117,7 @@ include 'includes/header.php';
                             <?php echo parseEmbedCode($featured_news['embed_code']); ?>
                         </div>
                     <?php else: ?>
-                        <a href="<?php echo getUrl('news', $featured_news['id'], $featured_news['slug']); ?>" class="block">
+                        <a href="<?php echo getUrl('news', $featured_news['id'], $featured_news['slug'], $featured_news['nanoid'] ?? null); ?>" class="block">
                             <?php
                             $featured_image = $featured_news['image'] ? SITE_URL . '/uploads/' . $featured_news['image'] : SITE_URL . '/uploads/profil.jpg';
                             ?>
@@ -112,7 +140,7 @@ include 'includes/header.php';
                     </div>
 
                     <h2 class="text-4xl md:text-5xl font-bold font-serif leading-tight text-black dark:text-white mb-6 group-hover:text-red-700 dark:group-hover:text-red-500 transition-colors">
-                        <a href="<?php echo getUrl('news', $featured_news['id'], $featured_news['slug']); ?>">
+                        <a href="<?php echo getUrl('news', $featured_news['id'], $featured_news['slug'], $featured_news['nanoid'] ?? null); ?>">
                             <?php echo htmlspecialchars($featured_news['title']); ?>
                         </a>
                     </h2>
@@ -139,7 +167,7 @@ include 'includes/header.php';
                             </div>
                         </div>
                     <?php else: ?>
-                        <a href="<?php echo getUrl('news', $news['id'], $news['slug']); ?>"
+                        <a href="<?php echo getUrl('news', $news['id'], $news['slug'], $news['nanoid'] ?? null); ?>"
                             class="block w-full mb-4 overflow-hidden border border-gray-200 dark:border-gray-800">
                             <?php
                             $news_image = $news['image'] ? SITE_URL . '/uploads/' . $news['image'] : SITE_URL . '/uploads/profil.jpg';
@@ -167,7 +195,7 @@ include 'includes/header.php';
                         </div>
 
                         <h3 class="text-2xl font-bold font-serif leading-tight group-hover:text-red-700 dark:group-hover:text-red-500 transition-colors text-black dark:text-white mb-3">
-                            <a href="<?php echo getUrl('news', $news['id'], $news['slug']); ?>">
+                            <a href="<?php echo getUrl('news', $news['id'], $news['slug'], $news['nanoid'] ?? null); ?>">
                                 <?php echo htmlspecialchars($news['title']); ?>
                             </a>
                         </h3>
@@ -245,7 +273,7 @@ include 'includes/header.php';
                     <p class="text-gray-600 dark:text-gray-400 mb-4 line-clamp-3">
                         <?php echo htmlspecialchars($project['description']); ?>
                     </p>
-                    <a href="<?php echo getUrl('projects', $project['id'], $project['slug']); ?>" 
+                    <a href="<?php echo getUrl('projects', $project['id'], $project['slug'], $project['nanoid'] ?? null); ?>" 
                        class="inline-flex items-center text-[rgb(var(--color-primary))] font-semibold hover:gap-2 transition-all">
                         Voir le projet
                         <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">

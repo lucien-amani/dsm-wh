@@ -602,7 +602,7 @@ section { overflow: hidden; }
         </div>
 
         <div class="text-center">
-            <a href="<?php echo SITE_URL; ?>/contact.php" id="btn-devenir-partenaire" class="inline-block px-10 py-4 bg-white text-[rgb(var(--color-primary))] font-bold rounded-xl hover:bg-gray-100 transition-colors shadow-lg hover:shadow-xl text-lg">
+            <a href="<?php echo $router->generate('contact'); ?>" id="btn-devenir-partenaire" class="inline-block px-10 py-4 bg-white text-[rgb(var(--color-primary))] font-bold rounded-xl hover:bg-gray-100 transition-colors shadow-lg hover:shadow-xl text-lg">
                 Nous contacter pour un partenariat
             </a>
         </div>

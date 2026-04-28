@@ -1,7 +1,7 @@
 <?php
 if (session_status() === PHP_SESSION_NONE) session_start();
 if (!isset($id)) {
-    header('Location: ' . SITE_URL . '/news.php');
+    header('Location: ' . SITE_URL . '/actualites');
     exit;
 }
 
@@ -17,7 +17,7 @@ if (!$news) {
 }
 
 if (isset($original_slug) && $original_slug !== $news['slug']) {
-    forceCanonicalUrl('news', $id, $news['slug']);
+    forceCanonicalUrl('news', $id, $news['slug'], $news['nanoid'] ?? null);
 }
 
 $stmt = $pdo->prepare("UPDATE news SET views = views + 1 WHERE id = :id");
@@ -261,7 +261,9 @@ include 'includes/header.php';
                     <span><?php echo htmlspecialchars($news['author_name'] ?: 'La Rédaction'); ?></span>
                 </div>
                 <span class="article-meta-sep">|</span>
-                <span><?php echo formatDateFR($news['created_at']); ?> à <?php echo date('H:i', strtotime($news['created_at'])); ?></span>
+                <span title="<?php echo date('d/m/Y à H:i', strtotime($news['created_at'])); ?>">
+                    Publié <?php echo formatSmartDate($news['created_at']); ?>
+                </span>
                 <span class="article-meta-sep">|</span>
                 <span><?php echo number_format($news['views'], 0, ',', ' '); ?> lectures</span>
             </div>
@@ -320,7 +322,7 @@ include 'includes/header.php';
             <div class="linked-section">
                 <div class="linked-grid">
                     <?php foreach ($linked as $item): ?>
-                    <a href="<?php echo getUrl('news', $item['id'], $item['slug']); ?>" class="linked-item">
+            <a href="<?php echo getUrl('news', $item['id'], $item['slug'], $item['nanoid'] ?? null); ?>" class="linked-item">
                         <div class="linked-badge">D</div>
                         <span class="linked-title"><?php echo htmlspecialchars($item['title']); ?></span>
                     </a>
@@ -345,7 +347,7 @@ include 'includes/header.php';
                 <p class="grid-label">À lire aussi</p>
                 <div class="img-grid">
                     <?php foreach ($grid as $item): ?>
-                    <a href="<?php echo getUrl('news', $item['id'], $item['slug']); ?>" class="img-grid-item">
+                    <a href="<?php echo getUrl('news', $item['id'], $item['slug'], $item['nanoid'] ?? null); ?>" class="img-grid-item">
                         <div class="img-grid-thumb">
                             <img src="<?php echo $item['image'] ? SITE_URL.'/uploads/'.$item['image'] : SITE_URL.'/uploads/profil.jpg'; ?>" 
                                  alt="<?php echo htmlspecialchars($item['title']); ?>">
@@ -386,7 +388,7 @@ include 'includes/header.php';
                         <div style="flex:1;">
                             <div style="display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;margin-bottom:.25rem;">
                                 <span class="comment-name"><?php echo htmlspecialchars($c['user_name']); ?></span>
-                                <span class="comment-date">Il y a <?php echo timeElapsedString($c['created_at']); ?></span>
+                                <span class="comment-date" title="<?php echo date('d/m/Y à H:i', strtotime($c['created_at'])); ?>"><?php echo ucfirst(timeAgo($c['created_at'])); ?></span>
                                 <button onclick="likeItem('<?php echo $c['id']; ?>','comment',this)" style="margin-left:auto;background:none;border:none;cursor:pointer;display:flex;align-items:center;gap:.3rem;font-size:11px;font-weight:700;color:#aaa;font-family:'Inter',sans-serif;" class="share-btn">
                                     <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
                                     <span class="count"><?php echo $c['likes'] ?? 0; ?></span>
@@ -407,7 +409,7 @@ include 'includes/header.php';
             <!-- Article mis en avant -->
             <?php $sb = !empty($category_news[0]) ? $category_news[0] : (!empty($recent_news[0]) ? $recent_news[0] : null); ?>
             <?php if ($sb): ?>
-            <a href="<?php echo getUrl('news', $sb['id'], $sb['slug']); ?>" class="sb-block" style="display:block;text-decoration:none;">
+            <a href="<?php echo getUrl('news', $sb['id'], $sb['slug'], $sb['nanoid'] ?? null); ?>" class="sb-block" style="display:block;text-decoration:none;">
                 <img src="<?php echo $sb['image'] ? SITE_URL.'/uploads/'.$sb['image'] : SITE_URL.'/uploads/profil.jpg'; ?>" class="sb-img">
                 <div class="sb-body">
                     <span class="sb-teaser"><?php echo htmlspecialchars($sb['title']); ?></span>
@@ -430,7 +432,7 @@ include 'includes/header.php';
             <!-- Fil des infos -->
             <p class="sb-section-title">Le Fil des Infos</p>
             <?php foreach (array_slice($recent_news, 0, 5) as $item): ?>
-            <a href="<?php echo getUrl('news', $item['id'], $item['slug']); ?>" class="sb-news-item">
+            <a href="<?php echo getUrl('news', $item['id'], $item['slug'], $item['nanoid'] ?? null); ?>" class="sb-news-item">
                 <img src="<?php echo $item['image'] ? SITE_URL.'/uploads/'.$item['image'] : SITE_URL.'/uploads/profil.jpg'; ?>" class="sb-news-thumb">
                 <div>
                     <span class="sb-news-time"><?php echo date('H:i', strtotime($item['created_at'])); ?></span>
@@ -442,7 +444,7 @@ include 'includes/header.php';
             <!-- Les plus lus -->
             <p class="sb-section-title" style="margin-top:1.5rem;">Les plus lus</p>
             <?php foreach ($popular_news as $i => $item): ?>
-            <a href="<?php echo getUrl('news', $item['id'], $item['slug']); ?>" class="sb-popular-item">
+            <a href="<?php echo getUrl('news', $item['id'], $item['slug'], $item['nanoid'] ?? null); ?>" class="sb-popular-item">
                 <span class="sb-popular-num"><?php echo $i+1; ?></span>
                 <span class="sb-popular-title"><?php echo htmlspecialchars($item['title']); ?></span>
             </a>
@@ -615,20 +617,5 @@ window.likeItem = function(id, type, btn) {
 
 
 <?php
-function timeElapsedString($datetime, $full = false) {
-    $now = new DateTime;
-    $ago = new DateTime($datetime);
-    $diff = $now->diff($ago);
-    $weeks = floor($diff->d / 7);
-    $days = $diff->d - ($weeks * 7);
-    $map = ['y'=>['an','ans'],'m'=>['mois','mois'],'w'=>['semaine','semaines'],'d'=>['jour','jours'],'h'=>['heure','heures'],'i'=>['minute','minutes'],'s'=>['seconde','secondes']];
-    $vals = ['y'=>$diff->y,'m'=>$diff->m,'w'=>$weeks,'d'=>$days,'h'=>$diff->h,'i'=>$diff->i,'s'=>$diff->s];
-    $parts = [];
-    foreach ($map as $k => $labels) {
-        if ($vals[$k]) { $parts[] = $vals[$k].' '.($vals[$k]>1?$labels[1]:$labels[0]); }
-    }
-    if (!$full) $parts = array_slice($parts, 0, 1);
-    return $parts ? implode(', ', $parts) : 'un instant';
-}
 include 'includes/footer.php';
 ?>

@@ -1,15 +1,12 @@
 <?php
-// Charger Composer
-require_once 'vendor/autoload.php';
+// Charger les variables d'environnement
+require_once 'config/env.php';
 
 // Charger la configuration et les helpers
 require_once 'config/database.php';
 require_once 'config/mail.php';
-require_once 'config/router.php'; // inclut autoload de AltoRouter et Hashids
-// helpers.php est chargé via composer autoload (files), mais au cas où :
-if (!function_exists('getUrl')) {
-    require_once 'config/helpers.php';
-}
+require_once 'config/router.php'; // inclut no-composer-lib.php
+require_once 'config/helpers.php';
 
 // Essayer de faire correspondre la requête actuelle
 $match = $router->match();
@@ -52,8 +49,8 @@ if ($match && is_callable($match['target'])) {
         'cookies' => 'pages/cookies.php',
         'news' => 'pages/news.php',
         'projects' => 'pages/projects.php',
-        'sitemap' => 'sitemap.php',
-        'robots' => 'robots.php'
+        'sitemap' => 'pages/sitemap.php',
+        'robots' => 'pages/robots.php'
     ];
 
     if (array_key_exists($match['target'], $staticPages)) {

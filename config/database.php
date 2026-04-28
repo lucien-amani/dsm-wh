@@ -1,9 +1,9 @@
 <?php
 // Configuration de la base de données
-define('DB_HOST', 'localhost');
-define('DB_USER', 'root');
-define('DB_PASS', 'Lucien-Amani8084LOCAL');
-define('DB_NAME', 'dsm_website');
+define('DB_HOST', $_ENV['DB_HOST'] ?? 'localhost');
+define('DB_USER', $_ENV['DB_USER'] ?? 'root');
+define('DB_PASS', $_ENV['DB_PASS'] ?? '');
+define('DB_NAME', $_ENV['DB_NAME'] ?? 'dsm_website');
 
 // Configuration générale du site
 define('SITE_NAME', 'Dynamique Samy Magadju/Wema ni Hakiba ASBL');
@@ -18,23 +18,16 @@ if (!defined('SITE_URL')) {
     $host     = $_SERVER['HTTP_HOST'] ?? 'localhost';
     
     // Détection intelligente du dossier racine
+    $projectRoot = str_replace('\\', '/', realpath(__DIR__ . '/..'));
+    $docRoot     = str_replace('\\', '/', realpath($_SERVER['DOCUMENT_ROOT']));
+    
     $webPath = '';
-    // Si on est en local (sur localhost), on garde le dossier /dsm
-    if ($host === 'localhost' || strpos($host, '127.0.0.1') !== false) {
-        $webPath = '/dsm';
-    } 
-    // Sinon (si c'est un tunnel ou un domaine), on vérifie si le projet est dans un sous-dossier
-    else {
-        $projectRoot = realpath(__DIR__ . '/..');
-        $docRoot     = realpath($_SERVER['DOCUMENT_ROOT']);
-        if ($projectRoot && $docRoot && strpos($projectRoot, $docRoot) === 0) {
-            $webPath = str_replace($docRoot, '', $projectRoot);
-            $webPath = str_replace('\\', '/', $webPath);
-            $webPath = rtrim($webPath, '/');
-        }
+    if ($projectRoot && $docRoot && strpos($projectRoot, $docRoot) === 0) {
+        $webPath = substr($projectRoot, strlen($docRoot));
+        $webPath = '/' . trim($webPath, '/');
     }
     
-    define('SITE_URL', rtrim($protocol . $host . $webPath, '/'));
+    define('SITE_URL', $_ENV['SITE_URL'] ?? rtrim($protocol . $host . $webPath, '/'));
 }
 define('ADMIN_EMAIL', 'admin@dsm-samy.com');
 
@@ -74,6 +67,44 @@ function getDBConnection() {
             $pdo->exec("CREATE TABLE IF NOT EXISTS log_exports (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 filename VARCHAR(255) NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )");
+        } catch (Exception $migrationError) {}
+
+        // AUTO-MIGRATION: Colonne nanoid pour news et projects
+        // Les NanoIDs remplacent les hashids dans les URLs (ex: /view/news/V1StGq8YU5/slug)
+        foreach (['news', 'projects'] as $_tbl) {
+            try {
+                $chk = $pdo->query("SHOW COLUMNS FROM `{$_tbl}` LIKE 'nanoid'");
+                if (!$chk->fetch()) {
+                    $pdo->exec("ALTER TABLE `{$_tbl}` ADD COLUMN nanoid VARCHAR(12) NULL AFTER id");
+                    $pdo->exec("ALTER TABLE `{$_tbl}` ADD UNIQUE INDEX idx_{$_tbl}_nanoid (nanoid)");
+                }
+                // Peupler les enregistrements sans nanoid
+                $rows = $pdo->query("SELECT id FROM `{$_tbl}` WHERE nanoid IS NULL OR nanoid = ''")->fetchAll(PDO::FETCH_COLUMN);
+                $chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+                $upd   = $pdo->prepare("UPDATE `{$_tbl}` SET nanoid = ? WHERE id = ?");
+                foreach ($rows as $_rid) {
+                    do {
+                        $_nano = '';
+                        for ($__i = 0; $__i < 10; $__i++) {
+                            $_nano .= $chars[random_int(0, 61)];
+                        }
+                        $exists = $pdo->prepare("SELECT 1 FROM `{$_tbl}` WHERE nanoid = ?");
+                        $exists->execute([$_nano]);
+                    } while ($exists->fetch());
+                    $upd->execute([$_nano, $_rid]);
+                }
+            } catch (Exception $_e) { /* silencieux */ }
+        }
+
+        // AUTO-MIGRATION: Table pour les abonnements push (PWA)
+        try {
+            $pdo->exec("CREATE TABLE IF NOT EXISTS push_subscriptions (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                endpoint TEXT NOT NULL,
+                p256dh VARCHAR(255) NOT NULL,
+                auth VARCHAR(255) NOT NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )");
         } catch (Exception $migrationError) {}
@@ -125,7 +156,10 @@ function truncate($text, $length = 150, $suffix = '...') {
 }
 // Fonction pour compresser et redimensionner une image
 function compressImage($source, $destination, $quality = 80, $maxWidth = 1200) {
-    if (!extension_loaded('gd')) return false;
+    if (!extension_loaded('gd')) {
+        // Fallback: simple copie si GD n'est pas dispo
+        return move_uploaded_file($source, $destination) || copy($source, $destination);
+    }
     
     $info = getimagesize($source);
     if ($info === false) return false;
@@ -139,7 +173,7 @@ function compressImage($source, $destination, $quality = 80, $maxWidth = 1200) {
         case 'image/png':  $img = imagecreatefrompng($source); break;
         case 'image/webp': $img = imagecreatefromwebp($source); break;
         case 'image/gif':  $img = imagecreatefromgif($source); break;
-        default: return false;
+        default: return move_uploaded_file($source, $destination) || copy($source, $destination);
     }
 
     // Calculer les nouvelles dimensions
@@ -157,7 +191,9 @@ function compressImage($source, $destination, $quality = 80, $maxWidth = 1200) {
     }
 
     // Sauvegarder en JPEG (meilleure compression pour le web)
-    return imagejpeg($img, $destination, $quality);
+    $result = imagejpeg($img, $destination, $quality);
+    imagedestroy($img);
+    return $result;
 }
 // Fonction pour enregistrer une action admin dans les logs
 function logAdminAction($userId, $action, $ip = null) {

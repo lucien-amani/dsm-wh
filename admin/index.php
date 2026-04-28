@@ -15,8 +15,7 @@
  *   /admin/deconnexion     → logout.php
  */
 
-// Charger Composer et la config (qui initialise $hashids)
-require_once __DIR__ . '/../vendor/autoload.php';
+// Charger la config (qui initialise $hashids via router.php)
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../config/mail.php';
 require_once __DIR__ . '/../config/router.php';
@@ -41,7 +40,6 @@ $path = preg_replace('#^' . preg_quote($admin_base, '#') . '#', '', $path);
 $path = trim($path, '/');
 
 // Table de routage : URL propre → fichier PHP
-// ... (reste du tableau et logique)
 $routes = [
     ''                     => 'login.php',
     'connexion'            => 'login.php',
@@ -51,6 +49,7 @@ $routes = [
     'projets'              => 'projects.php',
     'projets/modifier'     => 'projects_edit.php',
     'commentaires'         => 'comments.php',
+    'messages'             => 'messages.php',
     'profil'               => 'profile.php',
     'newsletter'           => 'newsletter.php',
     'newsletter/envoyer'   => 'newsletter_send.php',
