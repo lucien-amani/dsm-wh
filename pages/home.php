@@ -7,15 +7,15 @@ $page_description = 'Bienvenue sur le site officiel de la Dynamique Samy Magadju
 
 // Récupérer les dernières actualités (100 premières)
 $pdo = getDBConnection();
-$stmt = $pdo->query("SELECT n.*, u.full_name as author_name, u.avatar as author_avatar FROM news n LEFT JOIN users u ON n.author_id = u.id WHERE n.published = 1 ORDER BY n.created_at DESC LIMIT 100");
+$stmt = $pdo->query("SELECT n.*, u.full_name as author_name, u.avatar as author_avatar FROM news n LEFT JOIN users u ON n.author_id = u.id WHERE n.published = 1 AND n.deleted_at IS NULL ORDER BY n.created_at DESC LIMIT 100");
 $latest_news = $stmt->fetchAll();
 
 // Récupérer les articles les plus vus
-$stmt = $pdo->query("SELECT n.*, u.full_name as author_name, u.avatar as author_avatar FROM news n LEFT JOIN users u ON n.author_id = u.id WHERE n.published = 1 ORDER BY n.views DESC LIMIT 6");
+$stmt = $pdo->query("SELECT n.*, u.full_name as author_name, u.avatar as author_avatar FROM news n LEFT JOIN users u ON n.author_id = u.id WHERE n.published = 1 AND n.deleted_at IS NULL ORDER BY n.views DESC LIMIT 6");
 $popular_news = $stmt->fetchAll();
 
 // Récupérer les projets récents
-$stmt = $pdo->query("SELECT * FROM projects WHERE published = 1 ORDER BY created_at DESC LIMIT 3");
+$stmt = $pdo->query("SELECT * FROM projects WHERE published = 1 AND deleted_at IS NULL ORDER BY created_at DESC LIMIT 3");
 $latest_projects = $stmt->fetchAll();
 
 include 'includes/header.php';

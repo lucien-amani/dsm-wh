@@ -6,10 +6,6 @@ $pdo = getDBConnection();
 $news = null;
 $error = '';
 
-// Récupérer les catégories existantes
-$stmt_cats = $pdo->query("SELECT name FROM news_categories ORDER BY name ASC");
-$existing_categories = $stmt_cats->fetchAll(PDO::FETCH_COLUMN);
-
 $id_param = isset($_GET['id']) ? $_GET['id'] : 0;
 $id = 0;
 
@@ -17,7 +13,6 @@ if ($id_param) {
     if (is_numeric($id_param)) {
         $id = (int)$id_param;
     } else {
-        // Tenter de décoder le hash
         $decoded = $hashids->decode($id_param);
         $id = !empty($decoded) ? $decoded[0] : 0;
     }
@@ -29,122 +24,62 @@ if ($id) {
     $news = $stmt->fetch();
 }
 
-// Handle special case for Tweet, LinkedIn or YouTube
-$type = $_GET['type'] ?? '';
-$is_social_post = in_array($type, ['tweet', 'linkedin', 'youtube']);
-
-if ($is_social_post && !$news) {
-    if ($type === 'tweet') {
-        $category = 'X (Twitter)';
-        $title_prefix = 'Tweet';
-    } elseif ($type === 'linkedin') {
-        $category = 'LinkedIn';
-        $title_prefix = 'Post LinkedIn';
-    } else {
-        $category = 'YouTube';
-        $title_prefix = 'Vidéo YouTube';
-    }
-    
-    $news = [
-        'title' => '',
-        'category' => $category,
-        'content' => '',
-        'embed_code' => '',
-        'excerpt' => '',
-        'image' => '',
-        'published' => 1
-    ];
-}
+$is_social_post = (isset($news) && !empty($news['embed_code']) && empty($news['content']));
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $title = $_POST['title'] ?? '';
-    $category = $_POST['category'] ?? '';
-    $excerpt = $_POST['excerpt'] ?? '';
     $content = $_POST['content'] ?? '';
+    $excerpt = $_POST['excerpt'] ?? '';
+    $category = $_POST['category'] ?? '';
     $embed_code = $_POST['embed_code'] ?? '';
     $published = isset($_POST['published']) ? 1 : 0;
 
     if (empty($title) && !empty($embed_code)) {
-        if ($type === 'tweet') {
-            $title = "Actualité X (Twitter) du " . date('d/m/Y');
-        } elseif ($type === 'linkedin') {
-            $title = "Actualité LinkedIn du " . date('d/m/Y');
-        } elseif ($type === 'youtube') {
-            $title = "Actualité YouTube du " . date('d/m/Y');
-        } else {
-            $title = "Actualité de la Dynamique Samy Magadju/Wema ni Hakiba ASBL du " . date('d/m/Y');
-        }
-    }
-
-    $slug = generateSlug($title);
-
-    // Ensure slug is unique
-    $original_slug = $slug;
-    $counter = 1;
-    while (true) {
-        $stmt_check = $id ? $pdo->prepare("SELECT id FROM news WHERE slug = ? AND id != ?") : $pdo->prepare("SELECT id FROM news WHERE slug = ?");
-        $id ? $stmt_check->execute([$slug, $id]) : $stmt_check->execute([$slug]);
-        if ($stmt_check->rowCount() > 0) {
-            $slug = $original_slug . '-' . $counter;
-            $counter++;
-        } else {
-            break;
-        }
-    }
-
-    // Sauvegarder la nouvelle catégorie si elle n'existe pas
-    if ($category && !in_array($category, $existing_categories)) {
-        $stmt_add_cat = $pdo->prepare("INSERT IGNORE INTO news_categories (name) VALUES (?)");
-        $stmt_add_cat->execute([$category]);
-    }
-
-    $image_name = $news ? $news['image'] : null;
-    if (isset($_FILES['image']) && $_FILES['image']['error'] === 0) {
-        $upload_dir = '../uploads/';
-        $new_name = uniqid() . '.jpg'; // Convert to JPG for consistency
-        if (compressImage($_FILES['image']['tmp_name'], $upload_dir . $new_name)) {
-            // Delete old image if exists
-            if ($news && $news['image'] && file_exists($upload_dir . $news['image'])) {
-                unlink($upload_dir . $news['image']);
-            }
-            $image_name = $new_name;
-        }
+        $title = "Post Social du " . date('d/m/Y');
     }
 
     if ($title && ($content || $embed_code)) {
-        try {
-                if ($id) {
-                    $stmt = $pdo->prepare("UPDATE news SET title = :title, slug = :slug, category = :category, excerpt = :excerpt, content = :content, embed_code = :embed_code, image = :image, published = :published, author_id = :author_id WHERE id = :id");
-                    $stmt->execute([
-                        ':title' => $title, ':slug' => $slug, ':category' => $category, ':excerpt' => $excerpt,
-                        ':content' => $content, ':embed_code' => $embed_code, ':image' => $image_name, ':published' => $published, 
-                        ':author_id' => $_SESSION['admin_id'], ':id' => $id
-                    ]);
-                    logAdminAction($_SESSION['admin_id'], "modification article : $title");
-                    header('Location: ' . SITE_URL . '/admin/actualites?msg=updated');
-                    exit;
-                } else {
-                    // Générer un NanoID unique pour cette actualité
-                    $chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-                    do {
-                        $nanoid = '';
-                        for ($__i = 0; $__i < 10; $__i++) { $nanoid .= $chars[random_int(0, 61)]; }
-                        $chk = $pdo->prepare("SELECT 1 FROM news WHERE nanoid = ?");
-                        $chk->execute([$nanoid]);
-                    } while ($chk->fetch());
+        $slug = generateSlug($title);
+        $image_name = $news ? $news['image'] : null;
 
-                    $stmt = $pdo->prepare("INSERT INTO news (nanoid, title, slug, category, excerpt, content, embed_code, image, published, author_id) VALUES (:nanoid, :title, :slug, :category, :excerpt, :content, :embed_code, :image, :published, :author_id)");
-                    $stmt->execute([
-                        ':nanoid' => $nanoid, ':title' => $title, ':slug' => $slug, ':category' => $category, ':excerpt' => $excerpt,
-                        ':content' => $content, ':embed_code' => $embed_code, ':image' => $image_name, ':published' => $published,
-                        ':author_id' => $_SESSION['admin_id']
-                    ]);
-                    logAdminAction($_SESSION['admin_id'], "création article : $title");
-                    header('Location: ' . SITE_URL . '/admin/actualites?msg=created');
-                    exit;
-                }
-        } catch (PDOException $e) {
-            $error = "Erreur SQL : " . $e->getMessage();
+        if (isset($_FILES['image']) && $_FILES['image']['error'] === 0) {
+            $upload_dir = '../uploads/';
+            $extension = pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION);
+            $new_name = uniqid() . '.' . $extension;
+            if (move_uploaded_file($_FILES['image']['tmp_name'], $upload_dir . $new_name)) {
+                $image_name = $new_name;
+            }
+        }
+
+        if ($id) {
+            $stmt = $pdo->prepare("UPDATE news SET title = :title, slug = :slug, content = :content, excerpt = :excerpt, category = :category, embed_code = :embed_code, image = :image, published = :published, author_id = :author_id WHERE id = :id");
+            $stmt->execute([
+                ':title' => $title, ':slug' => $slug, ':content' => $content, ':excerpt' => $excerpt,
+                ':category' => $category, ':embed_code' => $embed_code, ':image' => $image_name,
+                ':published' => $published, ':author_id' => $_SESSION['admin_id'], ':id' => $id
+            ]);
+            logAdminAction($_SESSION['admin_id'], "modification actualité : $title");
+            header('Location: ' . SITE_URL . '/admin/actualites?msg=updated');
+            exit;
+        } else {
+            // NanoID logic
+            $chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+            do {
+                $nanoid = '';
+                for ($__i = 0; $__i < 10; $__i++) { $nanoid .= $chars[random_int(0, 61)]; }
+                $chk = $pdo->prepare("SELECT 1 FROM news WHERE nanoid = ?");
+                $chk->execute([$nanoid]);
+            } while ($chk->fetch());
+
+            $stmt = $pdo->prepare("INSERT INTO news (nanoid, title, slug, content, excerpt, category, embed_code, image, published, author_id) VALUES (:nanoid, :title, :slug, :content, :excerpt, :category, :embed_code, :image, :published, :author_id)");
+            $stmt->execute([
+                ':nanoid' => $nanoid, ':title' => $title, ':slug' => $slug, ':content' => $content, ':excerpt' => $excerpt,
+                ':category' => $category, ':embed_code' => $embed_code, ':image' => $image_name,
+                ':published' => $published, ':author_id' => $_SESSION['admin_id']
+            ]);
+            logAdminAction($_SESSION['admin_id'], "création actualité : $title");
+            header('Location: ' . SITE_URL . '/admin/actualites?msg=created');
+            exit;
         }
     } else {
         $error = 'Oups ! Le titre et le contenu sont indispensables (ou un lien de média).';
@@ -177,15 +112,17 @@ $current_page = 'news';
     <?php include 'includes/sidebar.php'; ?>
     <?php include 'includes/toast.php'; ?>
 
-    <main class="lg:ml-72 flex flex-col min-w-0">
+    <main class="lg:ml-72 flex flex-col min-w-0 min-h-screen scroll-smooth">
         <!-- Sticky Sub-Header for Controls -->
         <form method="POST" enctype="multipart/form-data">
-        <header class="h-24 sticky top-0 z-40 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-8">
+        <header class="h-20 lg:h-24 sticky top-0 z-40 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-4 lg:px-8 transition-all">
+            <!-- Jeton CSRF pour la protection contre les attaques cross-site -->
+            <input type="hidden" name="csrf_token" value="<?php echo generateCsrfToken(); ?>">
             <div class="flex items-center gap-4">
                 <a href="<?php echo SITE_URL; ?>/admin/actualites" class="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 hover:text-emerald-600 transition-all">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
                 </a>
-                <h1 class="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tighter"><?php echo $id ? 'Modifier' : 'Nouvel'; ?> <span class="text-emerald-600">Article</span></h1>
+                <h1 class="text-lg lg:text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tighter truncate max-w-[150px] lg:max-w-none"><?php echo $id ? 'Modifier' : 'Nouvel'; ?> <span class="text-emerald-600">Article</span></h1>
                 <div id="autosave-status" class="text-[9px] font-black uppercase tracking-widest text-slate-400 ml-4 opacity-0 transition-opacity">
                     Sauvegarde...
                 </div>
@@ -200,8 +137,9 @@ $current_page = 'news';
                         <span class="ml-2 text-[10px] font-black text-slate-500 uppercase tracking-widest peer-checked:text-emerald-600">Public</span>
                     </label>
                 </div>
-                <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-4 rounded-[1.5rem] font-black uppercase tracking-widest text-xs shadow-xl shadow-emerald-600/20 hover:-translate-y-1 transition-all">
-                    Enregistrer
+                <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white p-3 lg:px-8 lg:py-4 rounded-xl lg:rounded-[1.5rem] font-black uppercase tracking-widest text-[10px] shadow-xl shadow-emerald-600/20 hover:-translate-y-1 transition-all flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                    <span class="hidden sm:inline">Enregistrer</span>
                 </button>
             </div>
         </header>
@@ -222,7 +160,7 @@ $current_page = 'news';
                         <!-- Main Title Input -->
                         <div class="space-y-3">
                             <label class="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] ml-2">Titre de l'Actualité</label>
-                            <input type="text" name="title" value="<?php echo htmlspecialchars($news['title'] ?? ''); ?>" placeholder="Entrez un titre percutant..."
+                            <input type="text" name="title" value="<?php echo e($news['title'] ?? ''); ?>" placeholder="Entrez un titre percutant..."
                                    class="block w-full px-8 py-6 bg-slate-50 dark:bg-slate-800 border-none rounded-[2rem] focus:ring-4 focus:ring-emerald-500/10 transition-all dark:text-white font-black text-3xl placeholder-slate-300">
                         </div>
 
@@ -245,33 +183,18 @@ $current_page = 'news';
                 <!-- Right Column: Settings & Media -->
                 <div class="space-y-8">
                     <!-- Image Widget -->
-                    <div class="bg-white dark:bg-slate-900 p-8 rounded-[3rem] shadow-sm border border-slate-200 dark:border-slate-800 space-y-6 <?php echo $is_social_post ? 'hidden' : ''; ?>">
-                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] ml-2">Image de couverture</label>
+                    <div class="bg-white dark:bg-slate-900 p-8 rounded-[3rem] shadow-sm border border-slate-200 dark:border-slate-800 space-y-6">
+                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] ml-2">Image de Couverture</label>
                         <div class="group relative aspect-video bg-slate-50 dark:bg-slate-800 rounded-3xl overflow-hidden border-2 border-dashed border-slate-200 dark:border-slate-700 flex flex-col items-center justify-center text-center p-4">
-                            <?php 
-                            $image_exists = ($news && $news['image'] && file_exists('../uploads/' . $news['image']));
-                            if($news && $news['image'] && $image_exists): 
-                            ?>
+                            <?php if($news && $news['image'] && file_exists('../uploads/' . $news['image'])): ?>
                                 <img src="<?php echo SITE_URL; ?>/uploads/<?php echo $news['image']; ?>" id="preview-img" class="absolute inset-0 w-full h-full object-cover">
                             <?php else: ?>
                                 <img id="preview-img" class="absolute inset-0 w-full h-full object-cover hidden" src="">
-                                <?php if($news && $news['image'] && !$image_exists): ?>
-                                    <!-- Debug: File <?php echo $news['image']; ?> not found in ../uploads/ -->
-                                    <div class="absolute inset-0 flex items-center justify-center bg-rose-500/10 text-rose-500 p-4">
-                                        <div class="text-[10px] font-black uppercase">Fichier introuvable</div>
-                                    </div>
-                                <?php endif; ?>
                             <?php endif; ?>
-                            
-                            <div class="relative z-10 opacity-0 group-hover:opacity-100 transition-opacity bg-black/40 inset-0 absolute flex items-center justify-center">
-                                <span class="bg-white text-slate-900 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest pointer-events-none">Changer</span>
-                            </div>
-                            
                             <div id="placeholder-ui" class="<?php echo ($news && $news['image']) ? 'hidden' : ''; ?> flex flex-col items-center">
                                 <svg class="w-10 h-10 text-slate-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">JPG, PNG (Max 5MB)</p>
+                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Glissez une image ici</p>
                             </div>
-
                             <input type="file" name="image" onchange="previewFile(this)" class="absolute inset-0 opacity-0 cursor-pointer z-20">
                         </div>
                     </div>
@@ -280,18 +203,8 @@ $current_page = 'news';
                     <div class="bg-white dark:bg-slate-900 p-8 rounded-[3rem] shadow-sm border border-slate-200 dark:border-slate-800 space-y-6">
                         <div class="space-y-3">
                             <label class="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] ml-2">Catégorie</label>
-                            <div class="relative group">
-                                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-emerald-600 transition-colors">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
-                                </div>
-                                <input list="news-category-list" name="category" value="<?php echo htmlspecialchars($news['category'] ?? ''); ?>" placeholder="Choisir ou saisir..."
-                                       class="block w-full pl-12 pr-6 py-4 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl focus:ring-4 focus:ring-emerald-500/10 transition-all dark:text-white font-bold text-sm">
-                                <datalist id="news-category-list">
-                                    <?php foreach($existing_categories as $cat): ?>
-                                        <option value="<?php echo htmlspecialchars($cat); ?>">
-                                    <?php endforeach; ?>
-                                </datalist>
-                            </div>
+                            <input type="text" name="category" value="<?php echo e($news['category'] ?? ''); ?>" placeholder="ex: Politique, Social..."
+                                   class="block w-full px-6 py-4 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl focus:ring-4 focus:ring-emerald-500/10 transition-all dark:text-white font-bold text-sm">
                         </div>
 
                         <div class="space-y-3">
@@ -325,25 +238,32 @@ $current_page = 'news';
             }
         }
 
-        // TinyMCE avec Switcher Dark/Light intelligent
-        const isDark = document.documentElement.classList.contains('dark');
-        tinymce.init({
-            selector: '#content',
-            height: 600,
-            plugins: 'advlist autolink lists link image charmap preview anchor searchreplace verticalbreak code fullscreen insertdatetime media table code help wordcount',
-            toolbar: 'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link image media | removeformat | help',
-            content_style: 'body { font-family: Outfit, sans-serif; font-size:16px; padding: 2rem; }',
-            skin: isDark ? 'oxide-dark' : 'oxide',
-            content_css: isDark ? 'dark' : 'default',
-            branding: false,
-            menubar: false,
-            statusbar: false,
-            setup: function(editor) {
-                editor.on('init', function() {
-                    editor.getContainer().style.borderRadius = '1.5rem';
+        document.addEventListener('DOMContentLoaded', function() {
+            // TinyMCE avec Switcher Dark/Light intelligent
+            const isDark = document.documentElement.classList.contains('dark');
+            console.log("TinyMCE detection:", typeof tinymce);
+            if (typeof tinymce !== 'undefined') {
+                tinymce.init({
+                    selector: '#content',
+                    height: 600,
+                    plugins: 'advlist autolink lists link image charmap preview anchor searchreplace verticalbreak code fullscreen insertdatetime media table code help wordcount',
+                    toolbar: 'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link image media | removeformat | help',
+                    content_style: 'body { font-family: Outfit, sans-serif; font-size:16px; padding: 2rem; }',
+                    skin: isDark ? 'oxide-dark' : 'oxide',
+                    content_css: isDark ? 'dark' : 'default',
+                    branding: false,
+                    menubar: false,
+                    statusbar: false,
+                    setup: function(editor) {
+                        editor.on('init', function() {
+                            editor.getContainer().style.borderRadius = '1.5rem';
+                        });
+                    }
                 });
+            } else {
+                console.error("TinyMCE failed to load.");
             }
-        }); 
+        });
 
         // --- SAUVEGARDE AUTOMATIQUE (AUTOSAVE) ---
         let lastAutosaveData = "";
@@ -375,6 +295,7 @@ $current_page = 'news';
             statusEl.classList.remove('opacity-0');
             
             const formData = new FormData();
+            formData.append('csrf_token', '<?php echo $_SESSION['csrf_token'] ?? ''; ?>');
             formData.append('type', 'news');
             formData.append('id', currentId);
             formData.append('data[title]', title);

@@ -6,6 +6,9 @@ $pdo = getDBConnection();
 
 // Action: Supprimer
 if (isset($_GET['delete'])) {
+    if (!validateCsrfToken($_GET['csrf'] ?? '')) {
+        die("Erreur de sécurité : Jeton CSRF invalide.");
+    }
     $id_param = $_GET['delete'];
     $id = is_numeric($id_param) ? (int)$id_param : ($hashids->decode($id_param)[0] ?? 0);
     
@@ -19,6 +22,9 @@ if (isset($_GET['delete'])) {
 
 // Action: Toggle Statut
 if (isset($_GET['toggle'])) {
+    if (!validateCsrfToken($_GET['csrf'] ?? '')) {
+        die("Erreur de sécurité : Jeton CSRF invalide.");
+    }
     $id_param = $_GET['toggle'];
     $id = is_numeric($id_param) ? (int)$id_param : ($hashids->decode($id_param)[0] ?? 0);
     
@@ -53,18 +59,18 @@ $current_page = 'newsletter';
     <?php include 'includes/sidebar.php'; ?>
     <?php include 'includes/toast.php'; ?>
 
-    <main class="flex-1 lg:ml-72 flex flex-col min-w-0 overflow-hidden">
+    <main class="flex-1 lg:ml-72 flex flex-col min-w-0 min-h-screen scroll-smooth">
         <!-- Header -->
-        <header class="h-24 flex items-center justify-between px-8 lg:px-12 bg-white/50 dark:bg-slate-900/50 backdrop-blur-md sticky top-0 z-40 border-b border-slate-200 dark:border-slate-800/50">
+        <header class="h-20 lg:h-24 flex items-center justify-between px-4 lg:px-12 bg-white/70 dark:bg-slate-900/70 backdrop-blur-md sticky top-0 z-40 border-b border-slate-200 dark:border-slate-800/50 transition-all">
             <div>
-                <h1 class="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">Gestion <span class="text-amber-600">Newsletter</span></h1>
+                <h1 class="text-xl lg:text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tighter truncate">Gestion <span class="text-amber-600">Newsletter</span></h1>
                 <p class="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.4em] ml-1">Communauté & Abonnés</p>
             </div>
             
             <div class="flex items-center gap-6">
-                <a href="<?php echo SITE_URL; ?>/admin/newsletter/envoyer" class="px-6 py-3 bg-amber-600 text-white font-black rounded-xl hover:bg-amber-700 transition-all shadow-lg shadow-amber-600/20 active:scale-95 uppercase tracking-widest text-[10px] flex items-center gap-2">
+                <a href="<?php echo SITE_URL; ?>/admin/newsletter/envoyer" class="px-4 py-2 lg:px-6 lg:py-3 bg-amber-600 text-white font-black rounded-xl hover:bg-amber-700 transition-all shadow-lg shadow-amber-600/20 active:scale-95 uppercase tracking-widest text-[9px] lg:text-[10px] flex items-center gap-2">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
-                    Envoyer
+                    <span class="hidden sm:inline">Envoyer</span>
                 </a>
                 <div class="hidden sm:block text-right">
                     <span class="block text-lg font-black text-slate-900 dark:text-white leading-none"><?php echo count($subscribers); ?></span>
@@ -93,7 +99,7 @@ $current_page = 'newsletter';
                                 </td>
                                 <td class="px-8 py-6">
                                     <div class="flex justify-center">
-                                        <a href="?toggle=<?php echo $hashids->encode($sub['id']); ?>" class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border transition-all 
+                                        <a href="?toggle=<?php echo $hashids->encode($sub['id']); ?>&csrf=<?php echo $_SESSION['csrf_token']; ?>" class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border transition-all 
                                             <?php echo $sub['status'] === 'active' ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-500/20 text-emerald-600' : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500'; ?>">
                                             <div class="w-1.5 h-1.5 rounded-full <?php echo $sub['status'] === 'active' ? 'bg-emerald-500 shadow-lg shadow-emerald-500/50' : 'bg-slate-400'; ?>"></div>
                                             <span class="text-[9px] font-black uppercase tracking-widest"><?php echo $sub['status'] === 'active' ? 'Actif' : 'Désabonné'; ?></span>
@@ -106,7 +112,7 @@ $current_page = 'newsletter';
                                 </td>
                                 <td class="px-8 py-6 text-right">
                                     <div class="flex items-center justify-end gap-3 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
-                                        <a href="?delete=<?php echo $hashids->encode($sub['id']); ?>" onclick="event.preventDefault(); showConfirm('Supprimer cet abonné ?', () => window.location.href=this.href);" class="w-10 h-10 bg-rose-50 dark:bg-rose-900/20 text-rose-600 rounded-xl flex items-center justify-center hover:bg-rose-600 hover:text-white transition-all shadow-lg hover:shadow-rose-500/20 border border-rose-500/10" title="Supprimer">
+                                        <a href="?delete=<?php echo $hashids->encode($sub['id']); ?>&csrf=<?php echo $_SESSION['csrf_token']; ?>" onclick="event.preventDefault(); showConfirm('Supprimer cet abonné ?', () => window.location.href=this.href);" class="w-10 h-10 bg-rose-50 dark:bg-rose-900/20 text-rose-600 rounded-xl flex items-center justify-center hover:bg-rose-600 hover:text-white transition-all shadow-lg hover:shadow-rose-500/20 border border-rose-500/10" title="Supprimer">
                                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                                         </a>
                                     </div>

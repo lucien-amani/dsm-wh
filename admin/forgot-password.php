@@ -88,29 +88,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Réinitialisation — DSM Admin</title>
+    <link rel="icon" type="image/png" href="<?php echo SITE_URL; ?>/assets/logo/logo-dsm.jpg">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; }
-        .glass { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.2); }
+        body { font-family: 'Inter', sans-serif; }
+        .glass { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.5); }
     </style>
 </head>
-<body class="bg-[#0F0A1E] min-h-screen flex items-center justify-center p-6 relative overflow-hidden">
+<body class="bg-[#064e3b] min-h-screen flex items-center justify-center p-6 relative overflow-hidden">
     
     <!-- Décorations d'arrière-plan -->
-    <div class="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none">
-        <div class="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-purple-600 rounded-full blur-[120px] animate-pulse"></div>
-        <div class="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-600 rounded-full blur-[120px]"></div>
+    <div class="absolute top-0 left-0 w-full h-full opacity-20 pointer-events-none">
+        <div class="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-emerald-600 rounded-full blur-[120px] animate-pulse"></div>
+        <div class="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-emerald-400 rounded-full blur-[120px]"></div>
+        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full" style="background-image: radial-gradient(rgba(16,185,129,0.1) 1px, transparent 1px); background-size: 32px 32px;"></div>
     </div>
 
     <div class="w-full max-w-lg relative z-10">
         <div class="glass p-10 rounded-[2.5rem] shadow-2xl">
             <div class="text-center mb-10">
-                <div class="w-20 h-20 bg-emerald-500 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-xl shadow-emerald-500/20">
-                    <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                <div class="w-20 h-20 bg-emerald-500 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-xl shadow-emerald-500/40 overflow-hidden">
+                    <img src="<?php echo SITE_URL; ?>/assets/logo/logo-dsm.jpg" alt="Logo DSM" class="w-full h-full object-cover">
                 </div>
                 <h1 class="text-3xl font-black text-slate-900 uppercase tracking-tighter leading-none">Réinitialisation</h1>
-                <p class="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] mt-3">Sécurité & Accès</p>
+                <p class="text-[10px] font-black text-emerald-600 uppercase tracking-[0.4em] mt-3">Sécurité & Accès</p>
             </div>
 
             <form action="" method="POST" class="space-y-6">

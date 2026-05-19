@@ -1,8 +1,8 @@
 const CACHE_NAME = 'dsm-wh-cache-v1';
 const ASSETS_TO_CACHE = [
-  '/',
-  '/assets/logo/logo-dsm.jpg',
-  '/dist/output.css'
+  './',
+  'assets/logo/logo-dsm.jpg',
+  'dist/output.css'
 ];
 
 // Installation
@@ -64,9 +64,9 @@ self.addEventListener('push', (event) => {
 
   const options = {
     body: data.body,
-    icon: '/assets/logo/logo-dsm.jpg',
-    badge: '/assets/logo/logo-dsm.jpg',
-    data: data.url || '/',
+    icon: 'assets/logo/logo-dsm.jpg',
+    badge: 'assets/logo/logo-dsm.jpg',
+    data: data.url || './',
     vibrate: [100, 50, 100]
   };
 

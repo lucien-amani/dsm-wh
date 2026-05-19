@@ -56,7 +56,13 @@ $routes = [
     'parametres'           => 'settings.php',
     'utilisateurs'         => 'editors.php',
     'logs'                 => 'logs.php',
+    'adhesions'            => 'adhesions.php',
+    'adhesion-detail'      => 'adhesion_view.php',
+    'adhesion-export'      => 'adhesion_export.php',
+    'adhesion-download'    => 'adhesion_download_pdf.php',
     'forgot-password'      => 'forgot-password.php',
+    'ads'                  => 'ads.php',
+    'ads-edit'             => 'ads_edit.php',
     'deconnexion'          => 'logout.php',
 ];
 

@@ -17,7 +17,7 @@ $category = isset($_GET['category']) ? $_GET['category'] : '';
 $pdo = getDBConnection();
 
 // Requête principale
-$sql = "SELECT n.*, u.full_name as author_name FROM news n LEFT JOIN users u ON n.author_id = u.id WHERE n.published = 1";
+$sql = "SELECT n.*, u.full_name as author_name FROM news n LEFT JOIN users u ON n.author_id = u.id WHERE n.published = 1 AND n.deleted_at IS NULL";
 if ($category) {
     $sql .= " AND n.category = :category";
 }
@@ -33,7 +33,7 @@ $stmt->execute();
 $news_list = $stmt->fetchAll();
 
 // Compter le total pour la pagination
-$count_sql = "SELECT COUNT(*) FROM news WHERE published = 1";
+$count_sql = "SELECT COUNT(*) FROM news WHERE published = 1 AND deleted_at IS NULL";
 if ($category) {
     $count_sql .= " AND category = :category";
 }
@@ -46,11 +46,11 @@ $total_news = $stmt->fetchColumn();
 $total_pages = ceil($total_news / $per_page);
 
 // Récupérer les catégories
-$stmt = $pdo->query("SELECT DISTINCT category FROM news WHERE published = 1 AND category IS NOT NULL ORDER BY category");
+$stmt = $pdo->query("SELECT DISTINCT category FROM news WHERE published = 1 AND deleted_at IS NULL AND category IS NOT NULL ORDER BY category");
 $categories = $stmt->fetchAll(PDO::FETCH_COLUMN);
 
 // Actualité à la une (la plus récente)
-$stmt = $pdo->query("SELECT n.*, u.full_name as author_name FROM news n LEFT JOIN users u ON n.author_id = u.id WHERE n.published = 1 ORDER BY n.created_at DESC LIMIT 1");
+$stmt = $pdo->query("SELECT n.*, u.full_name as author_name FROM news n LEFT JOIN users u ON n.author_id = u.id WHERE n.published = 1 AND n.deleted_at IS NULL ORDER BY n.created_at DESC LIMIT 1");
 $featured_news = $stmt->fetch();
 
 include 'includes/header.php';
@@ -167,6 +167,19 @@ include 'includes/header.php';
     </section>
 <?php endif; ?>
 
+<!-- SLOT A: NEWS LIST TOP -->
+<?php $ads_a = getActiveAds('news_list_top'); ?>
+<?php if (!empty($ads_a)): $ad = $ads_a[0]; ?>
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-12">
+    <div class="ad-unit group relative bg-slate-50 dark:bg-slate-800/50 rounded-3xl overflow-hidden border border-slate-100 dark:border-slate-800" data-ad-id="<?php echo $ad['id']; ?>">
+        <span class="absolute top-2 right-4 text-[8px] font-black uppercase tracking-[0.3em] text-slate-400 z-10">Sponsorisé</span>
+        <a href="<?php echo e($ad['link']); ?>" target="_blank" onclick="trackAd(<?php echo $ad['id']; ?>, 'click')" class="block">
+            <img src="<?php echo SITE_URL; ?>/uploads/ads/<?php echo $ad['image']; ?>" alt="Publicité" class="w-full h-auto max-h-[150px] object-cover">
+        </a>
+    </div>
+</div>
+<?php endif; ?>
+
 <!-- Liste des actualités (Le Figaro Grid) -->
 <section class="py-12 bg-white dark:bg-slate-900 transition-colors">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -227,6 +240,26 @@ include 'includes/header.php';
                 <?php endforeach; ?>
             </div>
 
+            <!-- SLOT B: NEWS LIST INFEED (After grid) -->
+            <?php $ads_b = getActiveAds('news_list_infeed'); ?>
+            <?php if (!empty($ads_b)): $ad = $ads_b[0]; ?>
+            <div class="mt-16">
+                <div class="ad-unit group relative bg-white dark:bg-slate-900 border-2 border-dashed border-slate-100 dark:border-slate-800 rounded-[2.5rem] p-4" data-ad-id="<?php echo $ad['id']; ?>">
+                    <span class="absolute -top-3 left-8 px-4 bg-white dark:bg-slate-900 text-[9px] font-black uppercase tracking-widest text-amber-600 border border-amber-100 dark:border-amber-900/30 rounded-full">Partenaire</span>
+                    <a href="<?php echo e($ad['link']); ?>" target="_blank" onclick="trackAd(<?php echo $ad['id']; ?>, 'click')" class="flex flex-col md:flex-row gap-8 items-center">
+                        <div class="w-full md:w-1/3 aspect-video rounded-3xl overflow-hidden shadow-xl">
+                            <img src="<?php echo SITE_URL; ?>/uploads/ads/<?php echo $ad['image']; ?>" alt="Ad" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
+                        </div>
+                        <div class="flex-1 text-center md:text-left space-y-3">
+                            <h4 class="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tighter"><?php echo e($ad['title']); ?></h4>
+                            <p class="text-slate-500 font-medium">Découvrez les solutions innovantes de nos partenaires pour le développement du Sud-Kivu.</p>
+                            <div class="inline-flex items-center gap-2 text-amber-600 font-black text-[10px] uppercase tracking-widest border-b-2 border-amber-600/20 pb-1">En savoir plus →</div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+            <?php endif; ?>
+
             <!-- Pagination High End -->
             <?php if ($total_pages > 1): ?>
                 <div class="mt-24 pt-12 border-t border-slate-200 dark:border-slate-800">
@@ -268,6 +301,21 @@ include 'includes/header.php';
                     </nav>
                 </div>
             <?php endif; ?>
+        <?php endif; ?>
+
+        <!-- SLOT C: NEWS LIST BOTTOM -->
+        <?php $ads_c = getActiveAds('news_list_bottom'); ?>
+        <?php if (!empty($ads_c)): $ad = $ads_c[0]; ?>
+        <div class="mt-24 pt-12 border-t border-slate-100 dark:border-slate-800">
+            <div class="ad-unit max-w-4xl mx-auto rounded-2xl overflow-hidden shadow-sm" data-ad-id="<?php echo $ad['id']; ?>">
+                <a href="<?php echo e($ad['link']); ?>" target="_blank" onclick="trackAd(<?php echo $ad['id']; ?>, 'click')" class="block">
+                    <img src="<?php echo SITE_URL; ?>/uploads/ads/<?php echo $ad['image']; ?>" alt="Ad" class="w-full h-auto">
+                </a>
+                <div class="bg-slate-50 dark:bg-slate-800/50 py-2 px-4 text-center">
+                    <span class="text-[8px] font-black uppercase tracking-[0.4em] text-slate-400">- Espace Publicitaire -</span>
+                </div>
+            </div>
+        </div>
         <?php endif; ?>
     </div>
 </section>

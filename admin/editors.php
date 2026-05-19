@@ -293,27 +293,21 @@ if (isset($_GET['edit'])) {
     <?php include 'includes/sidebar.php'; ?>
     <?php include 'includes/toast.php'; ?>
 
-    <main class="flex-1 lg:ml-72 flex flex-col min-w-0 overflow-hidden">
+    <main class="flex-1 lg:ml-72 flex flex-col min-w-0 min-h-screen scroll-smooth">
         <!-- Header -->
-        <header class="h-24 flex items-center justify-between px-8 bg-white/50 dark:bg-slate-900/50 backdrop-blur-md sticky top-0 z-40 border-b border-slate-200 dark:border-slate-800/50">
-            <div>
-                <h1 class="text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">Gestion de <span class="text-emerald-600">l'Équipe</span></h1>
-                <p class="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] ml-1">Éditeurs & Collaborateurs</p>
-            </div>
-            
-            <div class="flex flex-wrap items-center gap-4">
-                <?php if (!isset($_GET['add']) && !$edit_editor): ?>
-                    <a href="?add=1" class="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-4 rounded-[1.5rem] font-black uppercase tracking-widest text-[10px] shadow-xl shadow-emerald-600/20 hover:-translate-y-1 transition-all flex items-center gap-3">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                        Nouveau Membre
-                    </a>
-                <?php endif; ?>
-                <div class="hidden sm:block text-right border-l border-slate-200 dark:border-slate-800 pl-4">
-                    <p class="text-xs font-black text-slate-900 dark:text-white uppercase tracking-widest"><?php echo formatDateFR(date('Y-m-d')); ?></p>
-                    <p class="text-[9px] font-bold text-emerald-600 uppercase tracking-widest">Panel Administratif</p>
-                </div>
-            </div>
-        </header>
+        <?php 
+        $header_title = 'Gestion de <span class="text-emerald-600">l\'Équipe</span>';
+        $header_subtitle = 'Éditeurs & Collaborateurs';
+        $header_actions = '';
+        if (!isset($_GET['add']) && !$edit_editor) {
+            $header_actions = '
+                <a href="?add=1" class="bg-emerald-600 hover:bg-emerald-700 text-white p-2.5 lg:px-6 lg:py-4 rounded-xl font-black uppercase tracking-widest text-[9px] lg:text-[10px] shadow-lg shadow-emerald-600/20 hover:-translate-y-1 transition-all flex items-center gap-3">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                    <span class="hidden sm:inline">Nouveau Membre</span>
+                </a>';
+        }
+        include 'includes/header.php'; 
+        ?>
 
         <div class="p-8 lg:p-12 animate-fade-in">
             <?php if (isset($_GET['add']) || $edit_editor): ?>

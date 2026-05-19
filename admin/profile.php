@@ -87,14 +87,13 @@ $current_page = 'profile';
     <?php include 'includes/sidebar.php'; ?>
     <?php include 'includes/toast.php'; ?>
 
-    <main class="flex-1 lg:ml-72 flex flex-col min-w-0">
+    <main class="flex-1 lg:ml-72 flex flex-col min-w-0 min-h-screen scroll-smooth">
         <!-- Header -->
-        <header class="h-24 flex items-center justify-between px-8 bg-white/50 dark:bg-slate-900/50 backdrop-blur-md sticky top-0 z-40 border-b border-slate-200 dark:border-slate-800/50">
-            <div>
-                <h1 class="text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">Mon <span class="text-emerald-600">Profil</span></h1>
-                <p class="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] ml-1">Paramètres du compte</p>
-            </div>
-        </header>
+        <?php 
+        $header_title = 'Mon <span class="text-emerald-600">Profil</span>';
+        $header_subtitle = 'Paramètres du compte';
+        include 'includes/header.php'; 
+        ?>
 
         <div class="p-8 max-w-4xl mx-auto w-full animate-fade-in">
             <?php if($error): ?>
@@ -104,6 +103,8 @@ $current_page = 'profile';
             <?php endif; ?>
 
             <form method="POST" enctype="multipart/form-data" class="space-y-8">
+                <!-- Jeton CSRF -->
+                <input type="hidden" name="csrf_token" value="<?php echo generateCsrfToken(); ?>">
                 <!-- Profile Identity Card -->
                 <div class="bg-white dark:bg-slate-900 p-10 rounded-[3rem] shadow-sm border border-slate-200 dark:border-slate-800 text-center relative overflow-hidden group">
                     <div class="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
@@ -126,8 +127,8 @@ $current_page = 'profile';
                         </label>
                     </div>
                     
-                    <h2 class="text-2xl font-black text-slate-900 dark:text-white"><?php echo htmlspecialchars($user['full_name']); ?></h2>
-                    <p class="text-[10px] font-black text-emerald-600 uppercase tracking-widest mt-1"><?php echo $user['role']; ?></p>
+                    <h2 class="text-2xl font-black text-slate-900 dark:text-white"><?php echo e($user['full_name']); ?></h2>
+                    <p class="text-[10px] font-black text-emerald-600 uppercase tracking-widest mt-1"><?php echo e($user['role']); ?></p>
                 </div>
 
                 <!-- Form Fields -->
@@ -135,12 +136,12 @@ $current_page = 'profile';
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div class="space-y-3">
                             <label class="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] ml-2">Nom Complet</label>
-                            <input type="text" name="full_name" required value="<?php echo htmlspecialchars($user['full_name']); ?>" 
+                            <input type="text" name="full_name" required value="<?php echo e($user['full_name']); ?>" 
                                    class="block w-full px-8 py-4 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl focus:ring-4 focus:ring-emerald-500/10 transition-all dark:text-white font-bold text-sm">
                         </div>
                         <div class="space-y-3">
                             <label class="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] ml-2">Identifiant (Username)</label>
-                            <input type="text" name="username" required value="<?php echo htmlspecialchars($user['username']); ?>" 
+                            <input type="text" name="username" required value="<?php echo e($user['username']); ?>" 
                                    class="block w-full px-8 py-4 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl focus:ring-4 focus:ring-emerald-500/10 transition-all dark:text-white font-bold text-sm">
                         </div>
                     </div>
@@ -148,12 +149,12 @@ $current_page = 'profile';
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div class="space-y-3">
                             <label class="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] ml-2">E-mail Professionnel</label>
-                            <input type="email" name="email" required value="<?php echo htmlspecialchars($user['email']); ?>" 
+                            <input type="email" name="email" required value="<?php echo e($user['email']); ?>" 
                                    class="block w-full px-8 py-4 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl focus:ring-4 focus:ring-emerald-500/10 transition-all dark:text-white font-bold text-sm">
                         </div>
                         <div class="space-y-3">
                             <label class="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] ml-2">Téléphone</label>
-                            <input type="text" name="phone" value="<?php echo htmlspecialchars($user['phone']); ?>" 
+                            <input type="text" name="phone" value="<?php echo e($user['phone']); ?>" 
                                    class="block w-full px-8 py-4 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl focus:ring-4 focus:ring-emerald-500/10 transition-all dark:text-white font-bold text-sm">
                         </div>
                     </div>

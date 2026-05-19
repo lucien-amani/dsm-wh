@@ -37,7 +37,7 @@ echo '<?xml version="1.0" encoding="UTF-8"?>';
 
     <!-- Actualités Dynamiques -->
     <?php
-    $stmt = $pdo->query("SELECT id, nanoid, slug, updated_at FROM news WHERE published = 1 ORDER BY created_at DESC");
+    $stmt = $pdo->query("SELECT id, nanoid, slug, updated_at FROM news WHERE published = 1 AND deleted_at IS NULL ORDER BY created_at DESC");
     while($row = $stmt->fetch()):
         // Utiliser nanoid si présent, sinon hashids
         $hash = $row['nanoid'] ?: $hashids->encode($row['id']);

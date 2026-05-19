@@ -1,5 +1,19 @@
 <!DOCTYPE html>
 <html lang="fr">
+<?php
+// Vérifier si les adhésions sont activées
+try {
+    $pdo_h = getDBConnection();
+    $stmt_h = $pdo_h->prepare("SELECT key_value FROM settings WHERE key_name = 'membership_enabled'");
+    $stmt_h->execute();
+    $val_h = $stmt_h->fetchColumn();
+    // Utilisation d'une comparaison non-stricte pour être plus robuste (0 vs "0")
+    $is_membership_open = ($val_h == '1');
+} catch (Exception $e) {
+    $is_membership_open = false;
+}
+?>
+<!-- Debug Adhesion: <?php echo $is_membership_open ? 'OPEN' : 'CLOSED'; ?> (Value: <?php echo var_export($val_h, true); ?>) -->
 
 <head>
     <meta charset="UTF-8">
@@ -69,7 +83,7 @@
       },
       "publisher": {
         "@type": "Organization",
-        "name": "Dynamique Samy Magadju",
+        "name": "Dynamique Samy Magadju/Wema ni Hakiba",
         "logo": {
           "@type": "ImageObject",
           "url": "<?php echo SITE_URL; ?>/assets/logo/logo-dsm.jpg"
@@ -96,7 +110,7 @@
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
     <meta property="og:image:type" content="image/jpeg">
-    <meta property="og:image:alt" content="<?php echo strip_tags($page_title ?? 'Samy Magadju'); ?>">
+    <meta property="og:image:alt" content="<?php echo strip_tags($page_title ?? 'Dynamique Samy Magadju/Wema ni Hakiba'); ?>">
 
     <!-- Twitter / X -->
     <meta name="twitter:card" content="summary_large_image">
@@ -111,7 +125,7 @@
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&display=swap" rel="stylesheet">
     <style>
         .font-serif {
             font-family: 'Playfair Display', Georgia, serif;
@@ -125,6 +139,39 @@
         .dark ::selection {
             background-color: rgba(251, 191, 36, 0.3); /* Amber-400 vivid */
             color: #fbbf24;
+        }
+
+        /* Custom Premium Scrollbar */
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background-color: rgba(16, 185, 129, 0.2);
+            border-radius: 20px;
+            border: 3px solid transparent;
+            background-clip: content-box;
+            transition: all 0.3s ease;
+        }
+
+        .dark ::-webkit-scrollbar-thumb {
+            background-color: rgba(16, 185, 129, 0.3);
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background-color: rgba(16, 185, 129, 1) !important;
+            border: 2px solid transparent;
+        }
+
+        /* Firefox */
+        * {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(16, 185, 129, 0.5) transparent;
         }
     </style>
 
@@ -232,11 +279,18 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-20">
                 <!-- Logo -->
-                <a href="<?php echo $router->generate('home'); ?>" class="flex items-center space-x-3 hover:opacity-80 transition-opacity">
-                    <img src="<?php echo SITE_URL; ?>/assets/logo/logo-dsm.jpg" alt="Logo DSM" class="h-12 w-12 sm:h-14 sm:w-14 rounded-full object-cover p-0.5 border-2 border-[rgb(var(--color-primary))]">
-                    <div>
-                        <div class="text-lg sm:text-xl font-bold text-[rgb(var(--color-dark))] dark:text-white transition-colors leading-tight">Dynamique Samy Magadju/Wema ni Hakiba ASBL</div>
-                        <div class="hidden sm:block text-xs text-gray-600 dark:text-gray-400 transition-colors">Ensemble pour le développement intégral</div>
+                <a href="<?php echo $router->generate('home'); ?>" class="flex items-center space-x-3 hover:opacity-80 transition-opacity shrink-0">
+                    <img src="<?php echo SITE_URL; ?>/assets/logo/logo-dsm.jpg" alt="Logo DSM" class="h-11 w-11 sm:h-13 sm:w-13 rounded-full object-cover p-0.5 border-2 border-[rgb(var(--color-primary))] shrink-0">
+                    <div class="flex flex-col">
+                        <div class="text-xs sm:text-sm font-black text-slate-900 dark:text-white uppercase tracking-tighter leading-none font-outfit">
+                            Dynamique Samy Magadju
+                        </div>
+                        <div class="text-[8px] sm:text-[9px] font-bold text-emerald-600 dark:text-emerald-500 uppercase tracking-tight leading-none mt-1 font-outfit">
+                            Wema ni Hakiba ASBL
+                        </div>
+                        <div class="hidden lg:block text-[8px] font-medium text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none mt-1">
+                            Ensemble pour le développement intégral
+                        </div>
                     </div>
                 </a>
 
@@ -258,13 +312,19 @@
                         class="nav-link <?php echo ($current_page ?? '') === 'projects' ? 'active' : ''; ?>">
                         Projets
                     </a>
+                    <?php if ($is_membership_open): ?>
+                    <a href="<?php echo $router->generate('adhesion'); ?>"
+                        class="nav-link <?php echo ($current_page ?? '') === 'adhesion' ? 'active' : ''; ?>">
+                        Adhésion
+                    </a>
+                    <?php endif; ?>
                     <a href="<?php echo $router->generate('contact'); ?>"
                         class="btn-primary">
                         Contact
                     </a>
 
                     <!-- PWA Install Button (Desktop) -->
-                    <button id="pwa-install-btn" class="hidden items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-slate-200 dark:hover:bg-slate-700 transition-all">
+                    <button id="pwa-install-btn" class="hidden items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-slate-200 dark:hover:bg-slate-700 transition-all" style="font-family: 'Outfit', sans-serif;">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                         Installer
                     </button>
@@ -311,15 +371,15 @@
         </div>
 
         <!-- Home -->
-        <a href="<?php echo $router->generate('home'); ?>" class="flex-1 flex flex-col items-center justify-center gap-0.5 group">
+        <a href="<?php echo $router->generate('home'); ?>" class="flex-1 flex flex-col items-center justify-center gap-0.5 group" style="font-family: 'Outfit', sans-serif;">
             <svg class="w-5 h-5 transition-colors <?php echo ($current_page ?? '') === 'home' ? 'text-emerald-600 dark:text-emerald-500' : 'text-gray-400 group-active:text-gray-900 dark:group-active:text-gray-200'; ?>" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
-            <span class="text-[9px] font-bold uppercase tracking-tighter <?php echo ($current_page ?? '') === 'home' ? 'text-emerald-600 dark:text-emerald-500' : 'text-gray-500 dark:text-gray-400'; ?>">Accueil</span>
+            <span class="text-[9px] font-black uppercase tracking-tighter <?php echo ($current_page ?? '') === 'home' ? 'text-emerald-600 dark:text-emerald-500' : 'text-gray-500 dark:text-gray-400'; ?>">Accueil</span>
         </a>
 
         <!-- News -->
-        <a href="<?php echo $router->generate('news_list'); ?>" class="flex-1 flex flex-col items-center justify-center gap-0.5 group">
+        <a href="<?php echo $router->generate('news_list'); ?>" class="flex-1 flex flex-col items-center justify-center gap-0.5 group" style="font-family: 'Outfit', sans-serif;">
             <svg class="w-5 h-5 transition-colors <?php echo ($current_page ?? '') === 'news' ? 'text-emerald-600 dark:text-emerald-500' : 'text-gray-400 group-active:text-gray-900 dark:group-active:text-gray-200'; ?>" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"/></svg>
-            <span class="text-[9px] font-bold uppercase tracking-tighter <?php echo ($current_page ?? '') === 'news' ? 'text-emerald-600 dark:text-emerald-500' : 'text-gray-500 dark:text-gray-400'; ?>">Actualités</span>
+            <span class="text-[9px] font-black uppercase tracking-tighter <?php echo ($current_page ?? '') === 'news' ? 'text-emerald-600 dark:text-emerald-500' : 'text-gray-500 dark:text-gray-400'; ?>">Actualités</span>
         </a>
 
         <!-- Central Action (Plus) -->
@@ -331,16 +391,24 @@
         </button>
 
         <!-- Projects -->
-        <a href="<?php echo $router->generate('projects_list'); ?>" class="flex-1 flex flex-col items-center justify-center gap-0.5 group">
+        <a href="<?php echo $router->generate('projects_list'); ?>" class="flex-1 flex flex-col items-center justify-center gap-0.5 group" style="font-family: 'Outfit', sans-serif;">
             <svg class="w-5 h-5 transition-colors <?php echo ($current_page ?? '') === 'projects' ? 'text-emerald-600 dark:text-emerald-500' : 'text-gray-400 group-active:text-gray-900 dark:group-active:text-gray-200'; ?>" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
-            <span class="text-[9px] font-bold uppercase tracking-tighter <?php echo ($current_page ?? '') === 'projects' ? 'text-emerald-600 dark:text-emerald-500' : 'text-gray-500 dark:text-gray-400'; ?>">Projets</span>
+            <span class="text-[9px] font-black uppercase tracking-tighter <?php echo ($current_page ?? '') === 'projects' ? 'text-emerald-600 dark:text-emerald-500' : 'text-gray-500 dark:text-gray-400'; ?>">Projets</span>
         </a>
 
         <!-- About -->
-        <a href="<?php echo $router->generate('about'); ?>" class="flex-1 flex flex-col items-center justify-center gap-0.5 group">
+        <a href="<?php echo $router->generate('about'); ?>" class="flex-1 flex flex-col items-center justify-center gap-0.5 group" style="font-family: 'Outfit', sans-serif;">
             <svg class="w-5 h-5 transition-colors <?php echo ($current_page ?? '') === 'about' ? 'text-emerald-600 dark:text-emerald-500' : 'text-gray-400 group-active:text-gray-900 dark:group-active:text-gray-200'; ?>" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-            <span class="text-[9px] font-bold uppercase tracking-tighter <?php echo ($current_page ?? '') === 'about' ? 'text-emerald-600 dark:text-emerald-500' : 'text-gray-500 dark:text-gray-400'; ?>">À Propos</span>
+            <span class="text-[9px] font-black uppercase tracking-tighter <?php echo ($current_page ?? '') === 'about' ? 'text-emerald-600 dark:text-emerald-500' : 'text-gray-500 dark:text-gray-400'; ?>">À Propos</span>
         </a>
+
+        <!-- Adhésion (Mobile) -->
+        <?php if ($is_membership_open): ?>
+        <a href="<?php echo $router->generate('adhesion'); ?>" class="flex-1 flex flex-col items-center justify-center gap-0.5 group" style="font-family: 'Outfit', sans-serif;">
+            <svg class="w-5 h-5 transition-colors <?php echo ($current_page ?? '') === 'adhesion' ? 'text-emerald-600 dark:text-emerald-500' : 'text-gray-400 group-active:text-gray-900 dark:group-active:text-gray-200'; ?>" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
+            <span class="text-[9px] font-black uppercase tracking-tighter <?php echo ($current_page ?? '') === 'adhesion' ? 'text-emerald-600 dark:text-emerald-500' : 'text-gray-500 dark:text-gray-400'; ?>">Adhésion</span>
+        </a>
+        <?php endif; ?>
     </div>
 
     <script>

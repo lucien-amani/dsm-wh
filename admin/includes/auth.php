@@ -39,3 +39,14 @@ if (isset($_SESSION['last_activity'])) {
 
 // Mise à jour du temps de dernière activité
 $_SESSION['last_activity'] = time();
+
+// PROTECTION CSRF GLOBALE : Vérifier toutes les requêtes POST dans l'administration
+require_once dirname(__DIR__, 2) . '/config/helpers.php';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $token = $_POST['csrf_token'] ?? $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '';
+    if (!validateCsrfToken($token)) {
+        http_response_code(403);
+        die("Erreur de sécurité : Jeton CSRF invalide ou manquant.");
+    }
+}

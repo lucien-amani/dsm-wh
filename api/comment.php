@@ -187,8 +187,12 @@ try {
 // Helper slug si non défini
 if (!function_exists('slugify')) {
     function slugify($text) {
-        $text = transliterator_transliterate('Any-Latin; Latin-ASCII; Lower()', $text);
-        $text = preg_replace('/[^a-z0-9]+/', '-', $text);
+        $accented = ['À','Á','Â','Ã','Ä','Å','Æ','Ç','È','É','Ê','Ë','Ì','Í','Î','Ï','Ð','Ñ','Ò','Ó','Ô','Õ','Ö','Ø','Ù','Ú','Û','Ü','Ý','ß','à','á','â','ã','ä','å','æ','ç','è','é','ê','ë','ì','í','î','ï','ñ','ò','ó','ô','õ','ö','ø','ù','ú','û','ü','ý','ÿ'];
+        $replace  = ['A','A','A','A','A','A','AE','C','E','E','E','E','I','I','I','I','D','N','O','O','O','O','O','O','U','U','U','U','Y','s','a','a','a','a','a','a','ae','c','e','e','e','e','i','i','i','i','n','o','o','o','o','o','o','u','u','u','u','y','y'];
+        $text = str_replace($accented, $replace, $text);
+        $text = strtolower($text);
+        $text = preg_replace('/[^a-z0-9-]+/', '-', $text);
+        $text = preg_replace('/-+/', '-', $text);
         return trim($text, '-');
     }
 }

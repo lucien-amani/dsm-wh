@@ -27,6 +27,8 @@ $router->map('GET', '/a-propos', 'about', 'about');
 $router->map('GET', '/mentions-legales', 'mentions-legales', 'mentions-legales');
 $router->map('GET', '/politique-confidentialite', 'politique-confidentialite', 'privacy');
 $router->map('GET', '/cookies', 'cookies', 'cookies');
+$router->map('GET', '/adhesion', 'adhesion', 'adhesion');
+$router->map('POST', '/adhesion', 'adhesion', 'adhesion_post');
 
 // SEO Routes
 $router->map('GET', '/sitemap.xml', 'sitemap', 'sitemap');

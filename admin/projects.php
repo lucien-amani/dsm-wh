@@ -59,19 +59,18 @@ $current_page = 'projects';
     <?php include 'includes/sidebar.php'; ?>
     <?php include 'includes/toast.php'; ?>
 
-    <main class="flex-1 lg:ml-72 flex flex-col min-w-0 overflow-hidden">
+    <main class="flex-1 lg:ml-72 flex flex-col min-w-0 min-h-screen scroll-smooth">
         <!-- Header -->
-        <header class="h-24 flex items-center justify-between px-8 bg-white/50 dark:bg-slate-900/50 backdrop-blur-md sticky top-0 z-40 border-b border-slate-200 dark:border-slate-800/50">
-            <div>
-                <h1 class="text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">Gestion des <span class="text-blue-600">Projets</span></h1>
-                <p class="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] ml-1">Portfolio & Réalisations</p>
-            </div>
-            
-            <a href="<?php echo SITE_URL; ?>/admin/projets/modifier" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-[1.5rem] font-black uppercase tracking-widest text-xs shadow-xl shadow-blue-600/20 hover:-translate-y-1 transition-all flex items-center gap-3">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                Nouveau Projet
-            </a>
-        </header>
+        <?php 
+        $header_title = 'Gestion des <span class="text-blue-600">Projets</span>';
+        $header_subtitle = 'Portfolio & Réalisations';
+        $header_actions = '
+            <a href="'.SITE_URL.'/admin/projets/modifier" class="bg-blue-600 hover:bg-blue-700 text-white p-2.5 lg:px-6 lg:py-3 rounded-xl font-black uppercase tracking-widest text-[9px] lg:text-[10px] shadow-lg shadow-blue-600/20 hover:-translate-y-1 transition-all flex items-center gap-3">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                <span class="hidden sm:inline">Nouveau Projet</span>
+            </a>';
+        include 'includes/header.php'; 
+        ?>
 
         <div class="p-8 space-y-8 animate-fade-in">
             <!-- Table Container -->

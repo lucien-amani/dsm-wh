@@ -266,6 +266,40 @@ function getReadingTime($content) {
 }
 
 /**
+ * Échappe une chaîne pour un affichage HTML sécurisé.
+ * Alias court pour htmlspecialchars().
+ */
+function e($text) {
+    return htmlspecialchars($text ?? '', ENT_QUOTES, 'UTF-8');
+}
+
+/**
+ * Génère un jeton CSRF et le stocke en session.
+ */
+function generateCsrfToken() {
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+    if (empty($_SESSION['csrf_token'])) {
+        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+    }
+    return $_SESSION['csrf_token'];
+}
+
+/**
+ * Valide un jeton CSRF.
+ */
+function validateCsrfToken($token) {
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+    if (empty($_SESSION['csrf_token']) || empty($token)) {
+        return false;
+    }
+    return hash_equals($_SESSION['csrf_token'], $token);
+}
+
+/**
  * Envoie une notification Push aux abonnés PWA
  * Nécessite l'installation de 'minishlink/web-push' pour fonctionner réellement.
  */
@@ -291,3 +325,21 @@ function sendPushNotification($title, $body, $url = '/') {
         return false;
     }
 }
+
+/**
+ * Récupère les publicités actives pour un emplacement spécifique.
+ */
+function getActiveAds($slot) {
+    try {
+        $pdo = getDBConnection();
+        $now = date('Y-m-d H:i:s');
+        $stmt = $pdo->prepare("SELECT * FROM ads WHERE slot = :slot AND is_active = 1 AND start_date <= :now1 AND end_date >= :now2 ORDER BY RAND()");
+        $stmt->execute([':slot' => $slot, ':now1' => $now, ':now2' => $now]);
+        return $stmt->fetchAll();
+    } catch (Exception $e) {
+        error_log("Erreur GetActiveAds : " . $e->getMessage());
+        return [];
+    }
+}
+
+

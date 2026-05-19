@@ -142,14 +142,14 @@ $current_page = 'projects';
     <?php include 'includes/sidebar.php'; ?>
     <?php include 'includes/toast.php'; ?>
 
-    <main class="lg:ml-72 flex flex-col min-w-0">
+    <main class="lg:ml-72 flex flex-col min-w-0 min-h-screen scroll-smooth">
         <form method="POST" enctype="multipart/form-data">
-        <header class="h-24 sticky top-0 z-40 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-8">
+        <header class="h-20 lg:h-24 sticky top-0 z-40 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-4 lg:px-8 transition-all">
             <div class="flex items-center gap-4">
                 <a href="<?php echo SITE_URL; ?>/admin/projets" class="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 hover:text-blue-600 transition-all">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
                 </a>
-                <h1 class="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tighter"><?php echo $id ? 'Modifier' : 'Nouveau'; ?> <span class="text-blue-600">Projet</span></h1>
+                <h1 class="text-lg lg:text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tighter truncate max-w-[150px] lg:max-w-none"><?php echo $id ? 'Modifier' : 'Nouveau'; ?> <span class="text-blue-600">Projet</span></h1>
                 <div id="autosave-status" class="text-[9px] font-black uppercase tracking-widest text-slate-400 ml-4 opacity-0 transition-opacity">
                     Sauvegarde...
                 </div>
@@ -163,8 +163,9 @@ $current_page = 'projects';
                         <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                     </label>
                 </div>
-                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-[1.5rem] font-black uppercase tracking-widest text-xs shadow-xl shadow-blue-600/20 hover:-translate-y-1 transition-all">
-                    Enregistrer
+                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white p-3 lg:px-8 lg:py-4 rounded-xl lg:rounded-[1.5rem] font-black uppercase tracking-widest text-[10px] shadow-xl shadow-blue-600/20 hover:-translate-y-1 transition-all flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                    <span class="hidden sm:inline">Enregistrer</span>
                 </button>
             </div>
         </header>
@@ -317,19 +318,32 @@ $current_page = 'projects';
             if (file) reader.readAsDataURL(file);
         }
 
-        const isDark = document.documentElement.classList.contains('dark');
-        tinymce.init({
-            selector: '#content',
-            height: 500,
-            plugins: 'advlist autolink lists link image charmap preview anchor searchreplace verticalbreak code fullscreen insertdatetime media table code help wordcount',
-            toolbar: 'undo redo | blocks fontfamily fontsize | bold italic underline | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link image media | removeformat | help',
-            content_style: 'body { font-family: Outfit, sans-serif; font-size:16px; padding: 1.5rem; }',
-            skin: isDark ? 'oxide-dark' : 'oxide',
-            content_css: isDark ? 'dark' : 'default',
-            branding: false,
-            menubar: false,
-            statusbar: false
+        document.addEventListener('DOMContentLoaded', function() {
+            const isDark = document.documentElement.classList.contains('dark');
+            console.log("TinyMCE detection:", typeof tinymce);
+            if (typeof tinymce !== 'undefined') {
+                tinymce.init({
+                    selector: '#content',
+                    height: 500,
+                    plugins: 'advlist autolink lists link image charmap preview anchor searchreplace verticalbreak code fullscreen insertdatetime media table code help wordcount',
+                    toolbar: 'undo redo | blocks fontfamily fontsize | bold italic underline | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link image media | removeformat | help',
+                    content_style: 'body { font-family: Outfit, sans-serif; font-size:16px; padding: 1.5rem; }',
+                    skin: isDark ? 'oxide-dark' : 'oxide',
+                    content_css: isDark ? 'dark' : 'default',
+                    branding: false,
+                    menubar: false,
+                    statusbar: false,
+                    setup: function(editor) {
+                        editor.on('init', function() {
+                            editor.getContainer().style.borderRadius = '1.5rem';
+                        });
+                    }
+                });
+            } else {
+                console.error("TinyMCE failed to load.");
+            }
         });
+
         // Dynamisme de l'icône de statut
         const statusSelect = document.getElementById('status-select');
         const statusIconContainer = document.getElementById('status-icon-container');

@@ -10,6 +10,7 @@ $projects_count = $pdo->query("SELECT COUNT(*) FROM projects")->fetchColumn();
 $messages_count = $pdo->query("SELECT COUNT(*) FROM contact_messages")->fetchColumn();
 $pending_comments_count = $pdo->query("SELECT COUNT(*) FROM comments WHERE status = 'pending'")->fetchColumn();
 $total_views = $pdo->query("SELECT SUM(views) FROM news")->fetchColumn() ?: 0;
+$active_ads_count = $pdo->query("SELECT COUNT(*) FROM ads WHERE is_active = 1")->fetchColumn();
 
 // Activités récentes
 $recent_actions = $pdo->query("
@@ -68,31 +69,18 @@ for ($i = 6; $i >= 0; $i--) {
     <?php include 'includes/toast.php'; ?>
 
     <!-- Main Content -->
-    <main class="flex-1 lg:ml-72 flex flex-col min-w-0 transition-all duration-300">
+    <main class="flex-1 lg:ml-72 flex flex-col min-w-0 min-h-screen scroll-smooth transition-all duration-300">
         <!-- Header -->
-        <header class="h-24 flex items-center justify-between px-8 bg-white/50 dark:bg-slate-900/50 backdrop-blur-md sticky top-0 z-40 border-b border-slate-200 dark:border-slate-800/50">
-            <div>
-                <h1 class="text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">Tableau de <span class="text-emerald-600">Bord</span></h1>
-                <p class="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] ml-1">Statistiques Globales</p>
-            </div>
-            
-            <div class="flex items-center gap-4">
-                <div class="bg-white dark:bg-slate-800 p-2 rounded-2xl border border-slate-200 dark:border-slate-700 flex items-center gap-2 pr-4 shadow-sm">
-                    <div class="w-10 h-10 bg-emerald-600 rounded-xl flex items-center justify-center text-white font-bold">
-                        <?php echo date('d'); ?>
-                    </div>
-                    <div class="flex flex-col">
-                        <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest"><?php echo date('F'); ?></span>
-                        <span class="text-sm font-black text-slate-900 dark:text-white"><?php echo date('Y'); ?></span>
-                    </div>
-                </div>
-            </div>
-        </header>
+        <?php 
+        $header_title = 'Tableau de <span class="text-emerald-600">Bord</span>';
+        $header_subtitle = 'Statistiques Globales';
+        include 'includes/header.php'; 
+        ?>
 
         <!-- Main Scrolling Content -->
-        <div class="p-8 space-y-8 animate-fade-in">
+        <div class="p-4 lg:p-12 space-y-8 animate-fade-in">
             <!-- Stats Grid -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
                 <!-- Stat Card: News -->
                 <div class="glass-panel p-8 rounded-[2.5rem] shadow-sm hover:shadow-2xl hover:shadow-emerald-500/10 transition-all group overflow-hidden relative">
                     <div class="absolute -right-4 -top-4 w-24 h-24 bg-emerald-500/5 rounded-full group-hover:scale-150 transition-transform duration-700"></div>
@@ -151,6 +139,21 @@ for ($i = 6; $i >= 0; $i--) {
                         <div>
                             <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Messages</p>
                             <h3 class="text-4xl font-black text-slate-900 dark:text-white tracking-tighter"><?php echo $messages_count; ?></h3>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stat Card: Ads -->
+                <div class="glass-panel p-8 rounded-[2.5rem] shadow-sm hover:shadow-2xl hover:shadow-amber-500/10 transition-all group overflow-hidden relative">
+                    <a href="ads.php" class="absolute inset-0 z-10"></a>
+                    <div class="absolute -right-4 -top-4 w-24 h-24 bg-amber-500/5 rounded-full group-hover:scale-150 transition-transform duration-700"></div>
+                    <div class="flex flex-col gap-4">
+                        <div class="w-14 h-14 bg-amber-100 dark:bg-amber-900/30 rounded-2xl flex items-center justify-center text-amber-600 group-hover:rotate-12 transition-all">
+                            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/></svg>
+                        </div>
+                        <div>
+                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Publicités</p>
+                            <h3 class="text-4xl font-black text-slate-900 dark:text-white tracking-tighter"><?php echo $active_ads_count; ?></h3>
                         </div>
                     </div>
                 </div>

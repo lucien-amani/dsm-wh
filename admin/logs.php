@@ -59,10 +59,25 @@ if (isset($_GET['download'])) {
 }
 
 
-// --- 3. RÉCUPÉRATION DES LOGS COURANTS ---
+// --- 3. RÉCUPÉRATION DES LOGS AVEC PAGINATION ---
+$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+if ($page < 1) $page = 1;
+$per_page = 20;
+$offset = ($page - 1) * $per_page;
+
 $logs = [];
+$total_items = 0;
+$total_pages = 0;
+
 try {
-    $stmt = $pdo->query("SELECT al.*, u.full_name, u.role FROM admin_logs al JOIN users u ON al.user_id = u.id ORDER BY al.created_at DESC LIMIT 100");
+    // Compter le total pour la pagination
+    $total_items = $pdo->query("SELECT COUNT(*) FROM admin_logs")->fetchColumn();
+    $total_pages = ceil($total_items / $per_page);
+
+    $stmt = $pdo->prepare("SELECT al.*, u.full_name, u.role FROM admin_logs al JOIN users u ON al.user_id = u.id ORDER BY al.created_at DESC LIMIT :limit OFFSET :offset");
+    $stmt->bindValue(':limit', $per_page, PDO::PARAM_INT);
+    $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+    $stmt->execute();
     $logs = $stmt->fetchAll();
 } catch(Exception $e) {}
 
@@ -96,11 +111,11 @@ $current_page = 'logs';
     <?php include 'includes/sidebar.php'; ?>
     <?php include 'includes/toast.php'; ?>
 
-    <main class="flex-1 lg:ml-72 flex flex-col min-w-0 overflow-hidden">
+    <main class="flex-1 lg:ml-72 flex flex-col min-w-0 min-h-screen scroll-smooth">
         <!-- Header -->
-        <header class="h-24 flex items-center justify-between px-8 lg:px-12 bg-white/50 dark:bg-slate-900/50 backdrop-blur-md sticky top-0 z-40 border-b border-slate-200 dark:border-slate-800/50">
+        <header class="h-20 lg:h-24 flex items-center justify-between px-4 lg:px-12 bg-white/70 dark:bg-slate-900/70 backdrop-blur-md sticky top-0 z-40 border-b border-slate-200 dark:border-slate-800/50 transition-all">
             <div>
-                <h1 class="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">Journaux <span class="text-emerald-600">d'activité</span></h1>
+                <h1 class="text-xl lg:text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tighter truncate">Journaux <span class="text-emerald-600">d'activité</span></h1>
                 <p class="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] ml-1">Traçabilité & Sécurité</p>
             </div>
             
@@ -115,7 +130,7 @@ $current_page = 'logs';
             <section>
                 <div class="flex items-center justify-between mb-6 px-4">
                     <h3 class="text-sm font-black text-slate-400 uppercase tracking-[0.2em]">Activités Récentes</h3>
-                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full">100 derniers logs</span>
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full"><?php echo $total_items; ?> logs enregistrés</span>
                 </div>
 
                 <div class="glass-panel rounded-[2.5rem] overflow-hidden shadow-sm">
@@ -174,6 +189,44 @@ $current_page = 'logs';
                         </table>
                     </div>
                 </div>
+
+                <!-- Pagination UI -->
+                <?php if ($total_pages > 1): ?>
+                <div class="mt-8 flex flex-col md:flex-row items-center justify-between gap-4 bg-white/30 dark:bg-slate-900/30 p-6 rounded-[2.5rem] border border-slate-200/50 dark:border-slate-800/50 shadow-sm backdrop-blur-sm">
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                        Affichage de <span class="text-slate-900 dark:text-white"><?php echo ($offset + 1); ?></span> à <span class="text-slate-900 dark:text-white"><?php echo min($offset + $per_page, $total_items); ?></span> sur <span class="text-slate-900 dark:text-white"><?php echo $total_items; ?></span> logs
+                    </p>
+                    
+                    <div class="flex items-center gap-2">
+                        <?php if ($page > 1): ?>
+                            <a href="?page=<?php echo ($page - 1); ?>" class="w-10 h-10 flex items-center justify-center rounded-xl border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-emerald-600 hover:text-white hover:border-emerald-600 transition-all shadow-sm">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                            </a>
+                        <?php endif; ?>
+
+                        <?php
+                        $start_p = max(1, $page - 2);
+                        $end_p = min($total_pages, $page + 2);
+                        
+                        if ($start_p > 1) echo '<span class="text-slate-400">...</span>';
+
+                        for ($i = $start_p; $i <= $end_p; $i++): 
+                        ?>
+                            <a href="?page=<?php echo $i; ?>" class="w-10 h-10 flex items-center justify-center rounded-xl font-black text-[10px] transition-all <?php echo $i === $page ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/20' : 'border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'; ?>">
+                                <?php echo $i; ?>
+                            </a>
+                        <?php endfor; ?>
+
+                        <?php if ($end_p < $total_pages) echo '<span class="text-slate-400">...</span>'; ?>
+
+                        <?php if ($page < $total_pages): ?>
+                            <a href="?page=<?php echo ($page + 1); ?>" class="w-10 h-10 flex items-center justify-center rounded-xl border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-emerald-600 hover:text-white hover:border-emerald-600 transition-all shadow-sm">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                            </a>
+                        <?php endif; ?>
+                    </div>
+                </div>
+                <?php endif; ?>
             </section>
 
             <!-- Archives Section -->

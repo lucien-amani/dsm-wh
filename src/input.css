@@ -21,6 +21,33 @@
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
     }
 
+    /* Custom Premium Scrollbar */
+    ::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+    }
+
+    ::-webkit-scrollbar-track {
+        @apply bg-slate-100 dark:bg-slate-900;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        @apply bg-slate-300 dark:bg-slate-700 rounded-full border-2 border-solid border-slate-100 dark:border-slate-900;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+        @apply bg-emerald-600 dark:bg-emerald-500;
+    }
+
+    * {
+        scrollbar-width: thin;
+        scrollbar-color: #059669 #f1f5f9;
+    }
+
+    .dark * {
+        scrollbar-color: #10b981 #0f172a;
+    }
+
     h1,
     h2,
     h3,
@@ -49,11 +76,13 @@
 
 @layer components {
     .btn-primary {
-        @apply px-6 py-3 bg-[rgb(var(--color-primary))] text-white font-semibold rounded-lg hover:bg-[rgb(var(--color-primary-dark))] transition-all duration-300 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98];
+        @apply px-7 py-3.5 bg-[rgb(var(--color-primary))] text-white font-black rounded-xl hover:bg-[rgb(var(--color-primary-dark))] transition-all duration-300 hover:shadow-xl hover:-translate-y-0.5 active:scale-95 uppercase tracking-widest text-[11px] lg:text-xs;
+        font-family: 'Outfit', sans-serif;
     }
 
     .btn-secondary {
-        @apply px-6 py-3 bg-white text-[rgb(var(--color-primary))] font-semibold rounded-lg border-2 border-[rgb(var(--color-primary))] hover:bg-[rgb(var(--color-primary))] hover:text-white transition-all duration-300 hover:shadow-lg;
+        @apply px-7 py-3.5 bg-white text-[rgb(var(--color-primary))] font-black rounded-xl border-2 border-[rgb(var(--color-primary))] hover:bg-[rgb(var(--color-primary))] hover:text-white transition-all duration-300 hover:shadow-xl active:scale-95 uppercase tracking-widest text-[11px] lg:text-xs;
+        font-family: 'Outfit', sans-serif;
     }
 
     .section-title {
@@ -78,7 +107,8 @@
     }
 
     .nav-link {
-        @apply text-gray-700 hover:text-[rgb(var(--color-primary))] font-medium transition-colors duration-200 relative;
+        @apply text-gray-700 dark:text-gray-300 hover:text-[rgb(var(--color-primary))] font-bold transition-colors duration-200 relative uppercase tracking-widest text-[10px] lg:text-[11px];
+        font-family: 'Outfit', sans-serif;
     }
 
     .nav-link::after {
@@ -245,3 +275,45 @@
 .prose td {
     @apply py-3 border-b border-gray-100 dark:border-gray-800;
 }
+
+/* --- Admin Premium UI (Ads Management) --- */
+@layer components {
+    .premium-input {
+        @apply w-full bg-white dark:bg-slate-800/50 border-2 border-slate-100 dark:border-slate-800 rounded-[1.5rem] px-6 py-4 text-slate-900 dark:text-white outline-none focus:border-amber-500/50 focus:ring-4 focus:ring-amber-500/10 transition-all font-bold placeholder:text-slate-300 dark:placeholder:text-slate-600;
+    }
+
+    .slot-card {
+        @apply relative cursor-pointer border-2 border-slate-100 dark:border-slate-800 rounded-2xl p-4 transition-all hover:border-amber-500/30 hover:bg-amber-50/10;
+    }
+
+    .slot-card.selected {
+        @apply border-amber-600 bg-amber-50 dark:bg-amber-900/20 ring-4 ring-amber-500/10;
+    }
+
+    .slot-card .check-icon {
+        @apply absolute top-3 right-3 w-5 h-5 bg-amber-600 text-white rounded-full flex items-center justify-center opacity-0 scale-50 transition-all;
+    }
+
+    .slot-card.selected .check-icon {
+        @apply opacity-100 scale-100;
+    }
+
+    .upload-area {
+        @apply relative border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-[2rem] p-8 text-center transition-all hover:border-amber-500/50 bg-slate-50/50 dark:bg-slate-900/30 cursor-pointer overflow-hidden;
+    }
+
+    .upload-area.has-image {
+        @apply border-emerald-500/30 bg-emerald-50/5 dark:bg-emerald-900/10;
+    }
+}
+
+@layer utilities {
+    /* Flatpickr Customization Utility */
+    .flatpickr-calendar {
+        @apply !rounded-3xl !shadow-2xl !border-0 !bg-white dark:!bg-slate-900 p-2;
+    }
+
+    .flatpickr-day.selected {
+        @apply !bg-amber-600 !border-amber-600;
+    }
+}

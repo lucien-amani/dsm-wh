@@ -416,6 +416,33 @@
             }
         });
     </script>
+    <!-- Ad Tracking Script -->
+    <script>
+        function trackAd(id, type) {
+            const fd = new FormData();
+            fd.append('id', id);
+            fd.append('type', type);
+            fetch('<?php echo SITE_URL; ?>/api/ad_tracking.php', { method: 'POST', body: fd })
+                .catch(err => console.error('Ad tracking error:', err));
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Observer pour les vues (impressions)
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const adId = entry.target.getAttribute('data-ad-id');
+                        if (adId && !entry.target.getAttribute('data-tracked')) {
+                            trackAd(adId, 'view');
+                            entry.target.setAttribute('data-tracked', 'true');
+                        }
+                    }
+                });
+            }, { threshold: 0.5 });
+
+            document.querySelectorAll('.ad-unit').forEach(el => observer.observe(el));
+        });
+    </script>
     <script src="<?php echo SITE_URL; ?>/assets/js/main.js"></script>
 </body>
 </html>

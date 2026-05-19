@@ -1,9 +1,16 @@
 <?php
 $current_page = $current_page ?? '';
 ?>
+<script>
+    if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.classList.add('dark');
+    } else {
+        document.documentElement.classList.remove('dark');
+    }
+</script>
 <aside id="sidebar" class="fixed inset-y-0 left-0 z-50 w-72 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 transition-transform duration-300 transform -translate-x-full lg:translate-x-0 overflow-y-auto">
     <!-- Logo & Brand -->
-    <div class="h-20 flex items-center px-8 border-b border-slate-100 dark:border-slate-800/50 shrink-0">
+    <div class="sticky top-0 z-20 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md h-20 flex items-center px-8 border-b border-slate-100 dark:border-slate-800/50 shrink-0">
         <div class="flex items-center gap-3">
             <div class="w-10 h-10 bg-emerald-600 rounded-xl flex items-center justify-center text-white font-black shadow-lg shadow-emerald-500/20 transform hover:rotate-6 transition-transform overflow-hidden">
                 <img src="<?php echo SITE_URL; ?>/assets/logo/logo-dsm.jpg" class="w-full h-full object-cover">
@@ -85,6 +92,14 @@ $current_page = $current_page ?? '';
             <span class="font-bold text-sm">Projets</span>
         </a>
 
+        <a href="<?php echo SITE_URL; ?>/admin/ads" 
+           class="flex items-center gap-3.5 px-4 py-3 rounded-2xl transition-all duration-300 group <?php echo $current_page === 'ads' ? 'bg-amber-600 text-white shadow-xl shadow-amber-600/20' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-amber-600'; ?>">
+            <div class="w-8 h-8 rounded-lg flex items-center justify-center <?php echo $current_page === 'ads' ? 'bg-white/20' : 'bg-slate-100 dark:bg-slate-800 group-hover:bg-amber-50 dark:group-hover:bg-amber-900/20'; ?>">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/></svg>
+            </div>
+            <span class="font-bold text-sm">Publicités</span>
+        </a>
+
         <a href="<?php echo SITE_URL; ?>/admin/commentaires" 
            class="flex items-center gap-3.5 px-4 py-3 rounded-2xl transition-all duration-300 group <?php echo $current_page === 'comments' ? 'bg-emerald-600 text-white shadow-xl shadow-emerald-600/20' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-emerald-600'; ?>">
             <div class="w-8 h-8 rounded-lg flex items-center justify-center <?php echo $current_page === 'comments' ? 'bg-white/20' : 'bg-slate-100 dark:bg-slate-800 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-900/20'; ?>">
@@ -97,6 +112,20 @@ $current_page = $current_page ?? '';
                 if($pending_count > 0): 
             ?>
                 <span class="ml-auto bg-amber-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full group-hover:scale-110 transition-transform"><?php echo $pending_count; ?></span>
+            <?php endif; ?>
+        </a>
+
+        <a href="<?php echo SITE_URL; ?>/admin/adhesions" 
+           class="flex items-center gap-3.5 px-4 py-3 rounded-2xl transition-all duration-300 group <?php echo $current_page === 'adhesions' ? 'bg-emerald-600 text-white shadow-xl shadow-emerald-600/20' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-emerald-600'; ?>">
+            <div class="w-8 h-8 rounded-lg flex items-center justify-center <?php echo $current_page === 'adhesions' ? 'bg-white/20' : 'bg-slate-100 dark:bg-slate-800 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-900/20'; ?>">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
+            </div>
+            <span class="font-bold text-sm">Adhésions</span>
+            <?php 
+                $pending_adh = $pdo_c->query("SELECT COUNT(*) FROM adhesions WHERE status = 'En attente'")->fetchColumn();
+                if($pending_adh > 0): 
+            ?>
+                <span class="ml-auto bg-amber-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full group-hover:scale-110 transition-transform"><?php echo $pending_adh; ?></span>
             <?php endif; ?>
         </a>
 
@@ -121,26 +150,6 @@ $current_page = $current_page ?? '';
             </div>
             <span class="font-bold text-sm">Newsletter</span>
         </a>
-
-        <div class="pt-8">
-            <p class="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-4 ml-4">Paramètres</p>
-            
-            <!-- Dark Mode Toggle Widget -->
-            <button id="theme-toggle" class="w-full flex items-center gap-3.5 px-4 py-3 rounded-2xl text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all group">
-                <div class="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center group-hover:text-amber-500 group-hover:bg-amber-50 dark:group-hover:bg-amber-900/20 transition-colors">
-                    <svg id="theme-toggle-dark-icon" class="hidden w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
-                    <svg id="theme-toggle-light-icon" class="hidden w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.464 5.05l-.707-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"></path></svg>
-                </div>
-                <span class="font-bold text-sm">Mode Sombre</span>
-            </button>
-
-            <a href="<?php echo SITE_URL; ?>/" target="_blank"
-               class="flex items-center gap-3.5 px-4 py-3 rounded-2xl text-slate-500 dark:text-slate-400 hover:bg-blue-50 dark:hover:bg-blue-900/10 hover:text-blue-600 transition-all group mt-1">
-                <div class="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center group-hover:bg-blue-100/50 dark:group-hover:bg-blue-900/30 transition-colors text-slate-400 group-hover:text-blue-600">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-                </div>
-                <span class="font-bold text-sm">Voir le site</span>
-            </a>
 
             <?php if ($_SESSION['admin_role'] === 'Superadmin' || $_SESSION['admin_role'] === 'Admin'): ?>
             <a href="<?php echo SITE_URL; ?>/admin/utilisateurs" 
@@ -237,43 +246,7 @@ $current_page = $current_page ?? '';
 
 <!-- Theme & Sidebar JS -->
 <script>
-    // Theme Switcher Logic
-    if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-        document.documentElement.classList.add('dark');
-        const lightIcon = document.getElementById('theme-toggle-light-icon');
-        if (lightIcon) lightIcon.classList.remove('hidden');
-    } else {
-        document.documentElement.classList.remove('dark');
-        const darkIcon = document.getElementById('theme-toggle-dark-icon');
-        if (darkIcon) darkIcon.classList.remove('hidden');
-    }
-
-    const themeToggleBtn = document.getElementById('theme-toggle');
-    if (themeToggleBtn) {
-        themeToggleBtn.addEventListener('click', function() {
-            document.getElementById('theme-toggle-dark-icon').classList.toggle('hidden');
-            document.getElementById('theme-toggle-light-icon').classList.toggle('hidden');
-
-            if (localStorage.getItem('color-theme')) {
-                if (localStorage.getItem('color-theme') === 'light') {
-                    document.documentElement.classList.add('dark');
-                    localStorage.setItem('color-theme', 'dark');
-                } else {
-                    document.documentElement.classList.remove('dark');
-                    localStorage.setItem('color-theme', 'light');
-                }
-            } else {
-                if (document.documentElement.classList.contains('dark')) {
-                    document.documentElement.classList.remove('dark');
-                    localStorage.setItem('color-theme', 'light');
-                } else {
-                    document.documentElement.classList.add('dark');
-                    localStorage.setItem('color-theme', 'dark');
-                }
-            }
-        });
-    }
-
+    // Theme Switcher Logic handled in head for initial load
     // Mobile Sidebar Toggle
     function toggleSidebar() {
         const sidebar = document.getElementById('sidebar');

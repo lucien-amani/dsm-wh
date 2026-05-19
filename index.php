@@ -30,8 +30,8 @@ if ($match && is_callable($match['target'])) {
         } else {
             // Fichier de vue manquant malgré route valide
             header($_SERVER["SERVER_PROTOCOL"] . ' 404 Not Found');
-            echo "Erreur 404 : Vue introuvable.";
-            // include 'pages/404.php';
+            include 'pages/404.php';
+            exit;
         }
     }
 
@@ -63,13 +63,14 @@ if ($match && is_callable($match['target'])) {
             require $file;
         } else {
             header($_SERVER["SERVER_PROTOCOL"] . ' 404 Not Found');
-            echo "Erreur 404 : Page non trouvée.";
+            include 'pages/404.php';
+            exit;
         }
     }
 
 } else {
     // Pas de match trouvé -> 404
     header($_SERVER["SERVER_PROTOCOL"] . ' 404 Not Found');
-    echo "<h1>Erreur 404</h1><p>La page demandée n'existe pas.</p>";
-    // include 'pages/404.php';
+    include 'pages/404.php';
+    exit;
 }

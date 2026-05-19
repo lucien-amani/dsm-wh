@@ -6,7 +6,7 @@ if (!isset($id)) {
 }
 
 $pdo = getDBConnection();
-$stmt = $pdo->prepare("SELECT n.*, u.full_name as author_name, u.avatar as author_avatar FROM news n LEFT JOIN users u ON n.author_id = u.id WHERE n.id = :id AND n.published = 1");
+$stmt = $pdo->prepare("SELECT n.*, u.full_name as author_name, u.avatar as author_avatar FROM news n LEFT JOIN users u ON n.author_id = u.id WHERE n.id = :id AND n.published = 1 AND n.deleted_at IS NULL");
 $stmt->execute([':id' => $id]);
 $news = $stmt->fetch();
 
@@ -23,15 +23,15 @@ if (isset($original_slug) && $original_slug !== $news['slug']) {
 $stmt = $pdo->prepare("UPDATE news SET views = views + 1 WHERE id = :id");
 $stmt->execute([':id' => $id]);
 
-$stmt = $pdo->prepare("SELECT * FROM news WHERE published = 1 AND id != :id AND category = :category ORDER BY created_at DESC LIMIT 6");
+$stmt = $pdo->prepare("SELECT * FROM news WHERE published = 1 AND deleted_at IS NULL AND id != :id AND category = :category ORDER BY created_at DESC LIMIT 6");
 $stmt->execute([':id' => $news['id'], ':category' => $news['category']]);
 $category_news = $stmt->fetchAll();
 
-$stmt = $pdo->prepare("SELECT * FROM news WHERE published = 1 AND id != :id ORDER BY created_at DESC LIMIT 6");
+$stmt = $pdo->prepare("SELECT * FROM news WHERE published = 1 AND deleted_at IS NULL AND id != :id ORDER BY created_at DESC LIMIT 6");
 $stmt->execute([':id' => $news['id']]);
 $recent_news = $stmt->fetchAll();
 
-$stmt = $pdo->prepare("SELECT * FROM news WHERE published = 1 AND id != :id ORDER BY views DESC LIMIT 4");
+$stmt = $pdo->prepare("SELECT * FROM news WHERE published = 1 AND deleted_at IS NULL AND id != :id ORDER BY views DESC LIMIT 4");
 $stmt->execute([':id' => $news['id']]);
 $popular_news = $stmt->fetchAll();
 
@@ -245,6 +245,16 @@ include 'includes/header.php';
         <!-- ============ MAIN ARTICLE ============ -->
         <main class="detail-main">
 
+            <!-- SLOT D: DETAIL TOP -->
+            <?php $ads_d = getActiveAds('news_detail_top'); ?>
+            <?php if (!empty($ads_d)): $ad = $ads_d[0]; ?>
+            <div class="ad-unit mb-8 rounded-2xl overflow-hidden border border-slate-100 dark:border-slate-800" data-ad-id="<?php echo $ad['id']; ?>">
+                <a href="<?php echo e($ad['link']); ?>" target="_blank" onclick="trackAd(<?php echo $ad['id']; ?>, 'click')" class="block">
+                    <img src="<?php echo SITE_URL; ?>/uploads/ads/<?php echo $ad['image']; ?>" alt="Ad" class="w-full h-auto max-h-[120px] object-cover">
+                </a>
+            </div>
+            <?php endif; ?>
+
             <div class="article-category"><?php echo htmlspecialchars($news['category'] ?: 'Actualité'); ?></div>
 
             <h1 class="article-title"><?php echo htmlspecialchars($news['title']); ?></h1>
@@ -281,7 +291,32 @@ include 'includes/header.php';
             <p class="article-chapeau"><?php echo htmlspecialchars($news['excerpt']); ?></p>
 
             <!-- BODY -->
-            <div id="article-body"><?php echo $news['content']; ?></div>
+            <div id="article-body">
+                <?php 
+                $content = $news['content'];
+                $ads_e = getActiveAds('news_detail_content');
+                if (!empty($ads_e)) {
+                    $ad = $ads_e[0];
+                    $paragraphs = explode('</p>', $content);
+                    $total_p = count($paragraphs);
+                    $middle = floor($total_p / 2);
+                    if ($total_p > 2) {
+                        $ad_html = '<div class="ad-unit my-8 p-4 bg-slate-50 dark:bg-slate-800/30 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700" data-ad-id="'.$ad['id'].'">
+                            <span class="block text-[8px] font-black uppercase tracking-widest text-slate-400 mb-2">Publicité - Continuer la lecture ci-dessous</span>
+                            <a href="'.e($ad['link']).'" target="_blank" onclick="trackAd('.$ad['id'].', \'click\')">
+                                <img src="'.SITE_URL.'/uploads/ads/'.$ad['image'].'" class="w-full h-auto rounded-xl">
+                            </a>
+                        </div>';
+                        $paragraphs[$middle] .= $ad_html;
+                        echo implode('</p>', $paragraphs);
+                    } else {
+                        echo $content;
+                    }
+                } else {
+                    echo $content;
+                }
+                ?>
+            </div>
 
             <!-- SHARE BAR -->
             <div class="share-bar">
@@ -360,6 +395,17 @@ include 'includes/header.php';
             </div>
             <?php endif; ?>
 
+            <!-- SLOT G: DETAIL BOTTOM -->
+            <?php $ads_g = getActiveAds('news_detail_bottom'); ?>
+            <?php if (!empty($ads_g)): $ad = $ads_g[0]; ?>
+            <div class="ad-unit my-12 border-y border-slate-100 dark:border-slate-800 py-6" data-ad-id="<?php echo $ad['id']; ?>">
+                <span class="block text-center text-[9px] font-black uppercase tracking-[0.3em] text-slate-300 mb-4">Suggestion DSM</span>
+                <a href="<?php echo e($ad['link']); ?>" target="_blank" onclick="trackAd(<?php echo $ad['id']; ?>, 'click')" class="block max-w-xl mx-auto rounded-3xl overflow-hidden shadow-2xl shadow-slate-900/10">
+                    <img src="<?php echo SITE_URL; ?>/uploads/ads/<?php echo $ad['image']; ?>" alt="Ad" class="w-full h-auto">
+                </a>
+            </div>
+            <?php endif; ?>
+
             <!-- COMMENTS -->
             <?php
             $stmt = $pdo->prepare("SELECT * FROM comments WHERE news_id = :id AND status = 'approved' ORDER BY created_at DESC");
@@ -416,6 +462,19 @@ include 'includes/header.php';
                     <span class="sb-readtime"><?php echo $read_time; ?> min de lecture</span>
                 </div>
             </a>
+            <?php endif; ?>
+
+            <!-- SLOT F: SIDEBAR -->
+            <?php $ads_f = getActiveAds('news_detail_sidebar'); ?>
+            <?php if (!empty($ads_f)): $ad = $ads_f[0]; ?>
+            <div class="ad-unit mb-8 p-1 bg-white dark:bg-slate-800 shadow-sm border border-slate-100 dark:border-slate-700 rounded-2xl" data-ad-id="<?php echo $ad['id']; ?>">
+                <a href="<?php echo e($ad['link']); ?>" target="_blank" onclick="trackAd(<?php echo $ad['id']; ?>, 'click')" class="block">
+                    <img src="<?php echo SITE_URL; ?>/uploads/ads/<?php echo $ad['image']; ?>" alt="Ad" class="w-full h-auto rounded-xl">
+                </a>
+                <div class="p-3">
+                    <span class="text-[9px] font-black uppercase tracking-widest text-slate-400">Publicité Partenaire</span>
+                </div>
+            </div>
             <?php endif; ?>
 
             <!-- Services Partenaires -->

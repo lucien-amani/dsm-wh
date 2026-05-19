@@ -1,5 +1,6 @@
 <?php
 require_once '../config/database.php';
+require_once '../config/helpers.php';
 session_start();
 
 // Si déjà connecté, vérifier le timeout et rediriger
@@ -26,45 +27,74 @@ if (isset($_GET['timeout'])) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = $_POST['username'] ?? '';
     $password = $_POST['password'] ?? '';
-    if ($username && $password) {
+    $csrf_token = $_POST['csrf_token'] ?? '';
+
+    if (!validateCsrfToken($csrf_token)) {
+        $error = 'Erreur de sécurité (CSRF). Veuillez réessayer.';
+    } elseif ($username && $password) {
         $pdo  = getDBConnection();
-        // Recherche par email OU téléphone
-        $stmt = $pdo->prepare("SELECT * FROM users WHERE email = :email OR phone = :phone OR username = :username");
-        $stmt->execute([
-            ':email' => $username, 
-            ':phone' => $username,
-            ':username' => $username
-        ]);
-        $user = $stmt->fetch();
+        $ip = $_SERVER['REMOTE_ADDR'];
 
-        if ($user && password_verify($password, $user['password'])) {
-            $_SESSION['admin_id']   = $user['id'];
-            $_SESSION['admin_name'] = $user['full_name'];
-            $_SESSION['admin_role'] = $user['role'];
-            $_SESSION['last_activity'] = time();
+        // RATE LIMITING : Vérifier les tentatives
+        $stmt_rate = $pdo->prepare("SELECT attempts, last_attempt FROM login_attempts WHERE ip_address = ?");
+        $stmt_rate->execute([$ip]);
+        $rate = $stmt_rate->fetch();
 
-            $stmt = $pdo->prepare("UPDATE users SET last_login = NOW() WHERE id = :id");
-            $stmt->execute([':id' => $user['id']]);
-
-            // Log de la connexion via la fonction centralisée (l'IP est détectée automatiquement)
-            logAdminAction($user['id'], 'connexion');
-
-            header('Location: ' . SITE_URL . '/admin/tableau-de-bord');
-            exit;
+        if ($rate && $rate['attempts'] >= 5 && strtotime($rate['last_attempt']) > (time() - 900)) {
+            $error = 'Trop de tentatives de connexion. Veuillez patienter 15 minutes.';
         } else {
-            $error = 'Identifiants invalides (E-mail ou Téléphone incorrect).';
+            // Recherche par email OU téléphone OU username
+            $stmt = $pdo->prepare("SELECT * FROM users WHERE email = :email OR phone = :phone OR username = :username");
+            $stmt->execute([
+                ':email' => $username, 
+                ':phone' => $username,
+                ':username' => $username
+            ]);
+            $user = $stmt->fetch();
+
+            if ($user && password_verify($password, $user['password'])) {
+                // Succès : Réinitialiser les tentatives
+                $pdo->prepare("DELETE FROM login_attempts WHERE ip_address = ?")->execute([$ip]);
+
+                // Sécurité : Régénérer l'ID de session pour éviter la fixation de session
+                session_regenerate_id(true);
+
+                $_SESSION['admin_id']   = $user['id'];
+                $_SESSION['admin_name'] = $user['full_name'];
+                $_SESSION['admin_role'] = $user['role'];
+                $_SESSION['last_activity'] = time();
+
+                $stmt = $pdo->prepare("UPDATE users SET last_login = NOW() WHERE id = :id");
+                $stmt->execute([':id' => $user['id']]);
+
+                logAdminAction($user['id'], 'connexion');
+
+                header('Location: ' . SITE_URL . '/admin/tableau-de-bord');
+                exit;
+            } else {
+                // Échec : Incrémenter les tentatives
+                if ($rate) {
+                    $pdo->prepare("UPDATE login_attempts SET attempts = attempts + 1, last_attempt = CURRENT_TIMESTAMP WHERE ip_address = ?")->execute([$ip]);
+                } else {
+                    $pdo->prepare("INSERT INTO login_attempts (ip_address, attempts) VALUES (?, 1)")->execute([$ip]);
+                }
+                $error = 'Identifiants invalides (E-mail ou Téléphone incorrect).';
+            }
         }
     } else {
         $error = 'Veuillez remplir tous les champs.';
     }
 }
+
+// Générer un nouveau token CSRF pour le formulaire
+$csrf_token = generateCsrfToken();
 ?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Connexion — DSM Admin</title>
+    <title>Connexion — DSM-WH Admin</title>
     <link rel="icon" type="image/png" href="<?php echo SITE_URL; ?>/assets/logo/logo-dsm.jpg">
     <meta name="description" content="Accédez à l'espace d'administration sécurisé de la plateforme DSM.">
 
@@ -219,8 +249,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             animation: logoPulse 3s ease-in-out infinite;
         }
         @keyframes logoPulse {
-            0%, 100% { box-shadow: 0 0 24px rgba(124,58,237,0.5); }
-            50%       { box-shadow: 0 0 40px rgba(124,58,237,0.9), 0 0 60px rgba(124,58,237,0.3); }
+            0%, 100% { box-shadow: 0 0 24px rgba(16,185,129,0.5); }
+            50%       { box-shadow: 0 0 40px rgba(16,185,129,0.9), 0 0 60px rgba(16,185,129,0.3); }
         }
         .brand-name {
             font-family: 'Plus Jakarta Sans', sans-serif;
@@ -370,7 +400,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             line-height: 1.2;
             letter-spacing: -0.02em;
         }
-        .form-title .emoji { font-style: normal; }
+        .welcome-icon {
+            display: inline-block;
+            vertical-align: middle;
+            margin-left: 6px;
+            color: #F59E0B; /* Gold color for warmth */
+            animation: wavingHand 2.5s ease-in-out infinite;
+            transform-origin: 70% 70%;
+        }
+
+        @keyframes wavingHand {
+            0%, 100% { transform: rotate(0deg); }
+            10%, 30% { transform: rotate(14deg); }
+            20%      { transform: rotate(-8deg); }
+            40%      { transform: rotate(-4deg); }
+            50%      { transform: rotate(10deg); }
+            60%      { transform: rotate(0deg); }
+        }
         .form-subtitle {
             margin-top: 10px;
             font-size: 0.875rem;
@@ -693,14 +739,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <!-- Logo / Badge -->
             <div class="brand-badge">
                 <div class="brand-logo">
-                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none"
-                         stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-                        <path d="M2 17l10 5 10-5"/>
-                        <path d="M2 12l10 5 10-5"/>
-                    </svg>
+                    <img src="<?php echo SITE_URL; ?>/assets/logo/logo-dsm.jpg" alt="Logo DSM" style="width: 100%; height: 100%; object-fit: cover; border-radius: 14px;">
                 </div>
-                <div class="brand-name">DYNAMIQUE<span>Samy Magadju</span></div>
+                <div class="brand-name">DYNAMIQUE<span> Samy Magadju</span></div>
             </div>
 
             <!-- Titre -->
@@ -779,7 +820,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <!-- En-tête -->
             <div class="form-header">
                 <p class="form-greeting">Espace Administrateur</p>
-                <h2 class="form-title">Bienvenue <span class="emoji">👋</span></h2>
+                <h2 class="form-title">Bienvenue 
+                    <span class="welcome-icon">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0"/>
+                            <path d="M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0"/>
+                            <path d="M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0"/>
+                            <path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/>
+                        </svg>
+                    </span>
+                </h2>
                 <p class="form-subtitle">Connectez-vous pour accéder à votre espace</p>
             </div>
 
@@ -807,6 +857,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             <!-- Formulaire -->
             <form id="loginForm" method="POST" action="login.php" novalidate>
+                <!-- Jeton CSRF -->
+                <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
 
                 <!-- Identifiant -->
                 <div class="field-group">

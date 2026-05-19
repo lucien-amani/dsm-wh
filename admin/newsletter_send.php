@@ -170,10 +170,10 @@ $current_page = 'newsletter';
     <?php include 'includes/sidebar.php'; ?>
     <?php include 'includes/toast.php'; ?>
 
-    <main class="flex-1 lg:ml-72 flex flex-col min-w-0 overflow-hidden">
-        <header class="h-24 sticky top-0 z-40 bg-white/70 dark:bg-slate-950/70 backdrop-blur-xl border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-8 lg:px-12">
+    <main class="flex-1 lg:ml-72 flex flex-col min-w-0 min-h-screen scroll-smooth">
+        <header class="h-20 lg:h-24 sticky top-0 z-40 bg-white/70 dark:bg-slate-950/70 backdrop-blur-xl border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-4 lg:px-12 transition-all">
             <div>
-                <h1 class="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">Envoyer <span class="text-amber-600">Newsletter</span></h1>
+                <h1 class="text-xl lg:text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tighter truncate">Envoyer <span class="text-amber-600">Newsletter</span></h1>
                 <p class="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.3em] mt-1">Composer et diffuser aux abonnés</p>
             </div>
             <a href="<?php echo SITE_URL; ?>/admin/newsletter" class="p-3 bg-slate-100 dark:bg-slate-800 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-200 transition-all">
